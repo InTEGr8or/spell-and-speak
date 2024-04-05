@@ -65,7 +65,6 @@ function App() {
     e.target.style.top = `${touchLocation.pageY - e.target.offsetHeight / 2}px`;
   };
 
-
   const handleTouchEnd = useCallback((e) => {
     // Get the location of the touch event
     const touchLocation = e.changedTouches[0];
