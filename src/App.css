@@ -25,6 +25,8 @@
   justify-content: center;
   gap: 10px;
   margin-bottom: 20px;
+  flex-wrap: wrap; /* Allow input boxes to wrap on smaller screens */
+  max-width: 100%;
 }
 
 .input-box {
@@ -44,6 +46,8 @@
   display: flex;
   justify-content: center;
   gap: 10px;
+  flex-wrap: wrap;
+  max-width: 200%;
 }
 
 .character-chip {
@@ -61,5 +65,11 @@
   }
   .dragging {
     opacity: 0.5;
+  }
+}
+
+@media (max-width: 600px) { /* Example breakpoint for mobile devices */
+  .character-tray {
+    /* justify-content: flex-start; Align to the start on small screens */
   }
 }

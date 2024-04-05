@@ -1,9 +1,13 @@
 // App.js or your main component file
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
+import wordList from './word-list.json';
 
 function App() {
+  const [currentWord, setCurrentWord] = useState('');
+  const [characterChips, setCharacterChips] = useState([]);
+
   const handleDragStart = (e) => {
     e.dataTransfer.setData('text/plain', e.target.id);
     // Optionally, add a drag image and set an offset to position it under the pointer
@@ -37,29 +41,85 @@ function App() {
   };
 
   const handleTouchEnd = (e) => {
+    // Get the location of the touch event
+    const touchLocation = e.changedTouches[0];
+
+    // Find all input boxes
+    const inputBoxes = document.querySelectorAll('.input-box');
+
+    // Get the touch point coordinates
+    const touchPoint = {
+      x: touchLocation.clientX,
+      y: touchLocation.clientY
+    };
+
+    // Determine if touch point is inside any input box
+    let targetBox = null;
+    inputBoxes.forEach(box => {
+      const boxRect = box.getBoundingClientRect();
+      if (
+        touchPoint.x >= boxRect.left &&
+        touchPoint.x <= boxRect.right &&
+        touchPoint.y >= boxRect.top &&
+        touchPoint.y <= boxRect.bottom
+      ) {
+        // The touch point is inside this box
+        targetBox = box;
+      }
+    });
+
+    if (targetBox) {
+      // If we have a target box, append the character chip to it
+      targetBox.appendChild(e.target);
+    } else {
+      // If no target box was found, reset the drag or move back to original position
+      // This logic depends on how you want to handle an unsuccessful drop
+    }
+
+    // Reset styles or any state as needed
     e.target.classList.remove('dragging');
-    // Logic to determine if the element was dropped over an input box
-    // This could involve checking the position of the touch event and the position of the input boxes
-    e.target.style.position = ''; // Reset styles or move the element to a drop target
-    // More logic here...
+    e.target.style.position = '';
+    e.target.style.left = '';
+    e.target.style.top = '';
   };
 
   useEffect(() => {
+    // Pick a new word from the list
+    const newWord = wordList[Math.floor(Math.random() * wordList.length)];
+    setCurrentWord(newWord);
+
+    // Create character chips for the new word
+    const characters = newWord.split('');
+    // Add 50% extra random characters
+    const extraChars = Math.ceil(characters.length * 0.5);
+    for (let i = 0; i < extraChars; i++) {
+      const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      characters.push(randomChar);
+    }
+
+    // Shuffle the array of characters
+    const shuffledCharacters = characters.sort(() => 0.5 - Math.random());
+    setCharacterChips(shuffledCharacters);
+  }, []);
+
+  useEffect(() => {
     // Attach touch event listeners
-    const characterChips = document.querySelectorAll('.character-chip');
-    characterChips.forEach((chip) => {
+    const characterChipsElements = document.querySelectorAll('.character-chip');
+    characterChipsElements.forEach((chip) => {
       chip.addEventListener('touchmove', handleTouchMove);
       chip.addEventListener('touchend', handleTouchEnd);
+      // Add any other event listeners you need here
     });
 
-    // Remember to clean up event listeners
+    // Cleanup function to remove event listeners
     return () => {
-      characterChips.forEach((chip) => {
+      characterChipsElements.forEach((chip) => {
         chip.removeEventListener('touchmove', handleTouchMove);
         chip.removeEventListener('touchend', handleTouchEnd);
+        // Remove any other event listeners you added
       });
     };
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, [characterChips]); // Dependency array includes characterChips to re-run the effect when it changes
 
   return (
     <div className="app">
@@ -68,21 +128,27 @@ function App() {
       </header>
       <span className="audio-icon">🔊</span>
       <div className="word-display">
-        <span className="word">CAT</span>
+        {currentWord}
       </div>
       <div 
        className="input-boxes">
-        <div onDragOver={handleDragOver} onDrop={handleDrop} className="input-box"></div>
-        <div onDragOver={handleDragOver} onDrop={handleDrop} className="input-box"></div>
-        <div onDragOver={handleDragOver} onDrop={handleDrop} className="input-box"></div>
+        {currentWord.split('').map((_, index) => (
+          <div key={index}
+               onDragOver={handleDragOver}
+               onDrop={handleDrop}
+               className="input-box"></div>
+        ))}
       </div>
       <div className="character-tray">
-        <div onDragStart={handleDragStart} draggable="true" className="character-chip">A</div>
-        <div onDragStart={handleDragStart} draggable="true" className="character-chip">S</div>
-        <div onDragStart={handleDragStart} draggable="true" className="character-chip">C</div>
-        <div onDragStart={handleDragStart} draggable="true" className="character-chip">E</div>
-        <div onDragStart={handleDragStart} draggable="true" className="character-chip">T</div>
-        {/* Add more character chips as needed */}
+        {characterChips.map((char, index) => (
+          <div key={index}
+               id={`character-chip-${index}`}
+               className="character-chip"
+               draggable="true"
+               onDragStart={handleDragStart}>
+            {char}
+          </div>
+        ))}
       </div>
     </div>
   );
