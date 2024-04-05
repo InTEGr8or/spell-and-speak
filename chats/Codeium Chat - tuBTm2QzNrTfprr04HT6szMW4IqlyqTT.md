@@ -1167,3 +1167,551 @@ Note: The GitHub CLI does not directly provide a command to set up GitHub Pages;
 Also, remember to commit and push any changes you made to your `package.json` and other configuration files before deploying.
 
 If you run into any issues or need further assistance, please let me know!
+
+---
+
+**User** _at 2:16 pm, Apr 5, 2024_
+
+I get this error:
+
+```ps1
+🕐[14:13:08]❯ npm run deploy
+
+> spell-and-speak@0.1.0 deploy
+> gh-pages -d build
+
+Error: Failed to get remote.origin.url (task must either be run in a git repository with a configured origin remote or must be configured with the "repo" option).
+  at D:\T3\Projects\self\spell-and-speak\node_modules\gh-pages\lib\git.js:214:13
+  at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+spell-and-speak on  master [!] via  v18.18.0 on ☁️ (us-west-1) took 9s 
+🕐[14:13:56]❯
+```
+
+---
+
+**Codeium** _at 2:16 pm, Apr 5, 2024_
+
+The error you're encountering indicates that the `gh-pages` script is unable to find the `remote.origin.url` of your Git repository. This could be because your current project directory is not a Git repository, or the Git repository does not have an `origin` remote configured.
+
+Here are the steps to resolve this:
+
+1. **Ensure your project is a Git repository**: If you haven't initialized your project directory as a Git repository, you can do so with the following command:
+
+   ```shell
+   git init
+   ```
+
+2. **Add the remote origin**: Make sure you've added your GitHub repository as the `origin` remote:
+
+   ```shell
+   git remote add origin https://github.com/<username>/<repository>.git
+   ```
+   Replace `<username>` with your GitHub username and `<repository>` with the name of your GitHub repository.
+
+3. **Commit your changes**: If you haven't already, make sure to commit the changes in your project:
+
+   ```shell
+   git add .
+   git commit -m "Initial commit"
+   ```
+
+4. **Push to GitHub**: Push your local commits to the GitHub repository:
+
+   ```shell
+   git push -u origin master
+   ```
+   If you're using a branch other than `master`, replace `master` with your branch name.
+
+5. **Try deploying again**: Now that your Git repository is set up with a remote `origin`, try running the deploy command again:
+
+   ```shell
+   npm run deploy
+   ```
+
+After successfully running the deploy command, your application should be available on GitHub Pages at the `homepage` URL you specified in your `package.json`.
+
+If you continue to face issues, ensure that your Git repository is correctly set up and that you have the necessary permissions to push to the repository on GitHub.
+
+---
+
+**User** _at 2:20 pm, Apr 5, 2024_
+
+I get this error:
+
+```ps1
+🕐[14:18:03]❯ gh repo edit InTEGr8or/spell-and-speak --default-branch gh-pages
+HTTP 422: Validation Failed (https://api.github.com/repos/InTEGr8or/spell-and-speak)
+Repository.default_branch is invalid
+```
+
+---
+
+**Codeium** _at 2:20 pm, Apr 5, 2024_
+
+The error you're encountering suggests that the `gh-pages` branch doesn't exist in your repository, or there's an issue with setting it as the default branch. Typically, the default branch of a repository is `master` or `main`, and for GitHub Pages, you wouldn't change the default branch but instead configure GitHub Pages to serve from the `gh-pages` branch.
+
+To configure GitHub Pages to serve from the `gh-pages` branch, you need to:
+
+1. **Check if the `gh-pages` branch exists**: After running `npm run deploy`, the `gh-pages` branch should automatically be created by the `gh-pages` package. You can check if the branch exists by running:
+
+   ```shell
+   git branch -a
+   ```
+
+   If the `gh-pages` branch does not exist, there may have been an issue with the deployment process. Ensure that the deployment script in your `package.json` is correct and that you have committed and pushed all changes to your GitHub repository before deploying.
+
+2. **Configure GitHub Pages**: To configure GitHub Pages to publish from the `gh-pages` branch, you should do this through the GitHub website:
+
+   - Go to your repository on GitHub.
+   - Click on the "Settings" tab.
+   - Scroll down to the "GitHub Pages" section.
+   - Under "Source", select the `gh-pages` branch and the root folder (`/`) for GitHub Pages to serve.
+   - Click "Save".
+
+Alternatively, you can use the GitHub CLI to configure the GitHub Pages source, but you cannot use it to change the default branch to `gh-pages`. Instead, the command should be:
+
+```shell
+gh repo edit InTEGr8or/spell-and-speak --web
+```
+
+This will open your repository settings in the web browser, where you can manually set the GitHub Pages source.
+
+Remember, the default branch should typically remain as `master` or `main`, and GitHub Pages should be set to serve from the `gh-pages` branch.
+
+---
+
+**User** _at 2:29 pm, Apr 5, 2024_
+
+Ok, the site is deployed to GitHub Pages, but it's only displaying the README.md. The GH Pages Source is set to "Deploy from a branch"
+
+---
+
+**Codeium** _at 2:29 pm, Apr 5, 2024_
+
+If your GitHub Pages site is only displaying the `README.md`, it might be because the `gh-pages` branch is not correctly set up or the build folder was not correctly deployed to the `gh-pages` branch.
+
+Here are the steps to ensure your build folder is deployed to the `gh-pages` branch and served by GitHub Pages:
+
+1. **Check the `gh-pages` branch**: Ensure that the `gh-pages` branch contains the build artifacts and not the source code. You can check the contents of the branch by switching to it locally:
+
+   ```shell
+   git checkout gh-pages
+   ```
+
+   You should see the contents of the `build` directory (e.g., `index.html`, `static` folder, etc.) at the root of the branch, not the source files like `README.md`.
+
+2. **GitHub Pages Source**: In your repository settings under the GitHub Pages section, make sure the source is set to the `gh-pages` branch and the `/ (root)` folder. This tells GitHub Pages to serve the files found at the root of the `gh-pages` branch.
+
+3. **Confirm `homepage` in `package.json`**: The `homepage` field in your `package.json` should match the URL of your GitHub Pages site, which should look like this:
+
+   ```json
+   "homepage": "https://InTEGr8or.github.io/spell-and-speak"
+   ```
+
+4. **Re-run the deployment**: If you need to redeploy, make sure you have committed all changes and then run:
+
+   ```shell
+   npm run deploy
+   ```
+
+5. **Check for GitHub Pages deployment**: After deploying, GitHub may take a few minutes to update your site. You can check the progress in the "Actions" tab (if you're using GitHub Actions) or by waiting a few minutes and refreshing your GitHub Pages URL.
+
+6. **Clear cache**: Sometimes, your browser may cache the old page. Try clearing your browser's cache or using an incognito window to view the updated site.
+
+If you've confirmed that the `gh-pages` branch has the correct build artifacts and GitHub Pages is still showing the `README.md`, it's possible there's a delay or issue on the GitHub side. In that case, you may want to retry the deployment or reach out to GitHub support for help.
+
+---
+
+**User** _at 2:35 pm, Apr 5, 2024_
+
+My homepage line in the `package.json` says:
+
+```json
+ "homepage": "https://integr8or.github.io/spell-and-speak/",
+```
+I can see the site running at:
+```http
+https://integr8or.github.io/spell-and-speak/
+```
+
+And I get this:
+
+```ps1
+🕐[14:32:00]❯ git remote -v    
+origin git@github.com:InTEGr8or/spell-and-speak.git (fetch)
+origin git@github.com:InTEGr8or/spell-and-speak.git (push)
+spell-and-speak on  master [!] via  v18.18.0 on ☁️ (us-west-1) 
+```
+
+But when I view the page it's just the readme.
+
+I get this error when trying to deploy:
+
+```ps1
+🕐[14:31:14]❯ npm run deploy
+
+> spell-and-speak@0.1.0 deploy
+> gh-pages -d build
+
+Error: Failed to get remote.origin.url (task must either be run in a git repository with a configured origin remote or must be configured with the "repo" option).
+  at D:\T3\Projects\self\spell-and-speak\node_modules\gh-pages\lib\git.js:214:13
+  at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+```
+
+---
+
+**Codeium** _at 2:36 pm, Apr 5, 2024_
+
+The error message suggests that the `gh-pages` npm package is having trouble identifying the remote Git URL. This might be because the remote URL is using the SSH format (`git@github.com:InTEGr8or/spell-and-speak.git`) and the `gh-pages` package expects an HTTPS URL format.
+
+Here are the steps to troubleshoot this issue:
+
+1. **Change the Remote URL to HTTPS**: Try changing the Git remote URL to the HTTPS format to see if that resolves the issue with `gh-pages`.
+
+   ```shell
+   git remote set-url origin https://github.com/InTEGr8or/spell-and-speak.git
+   ```
+
+2. **Retry Deployment**: After updating the remote URL, try running the deployment command again:
+
+   ```shell
+   npm run deploy
+   ```
+
+If that doesn't work or you prefer to keep using the SSH URL, you can specify the `repo` option in your `package.json` `deploy` script, which explicitly tells `gh-pages` which repository to use:
+
+```json
+"scripts": {
+  "deploy": "gh-pages -d build -r https://github.com/InTEGr8or/spell-and-speak.git"
+}
+```
+
+This `-r` option will override the remote URL that `gh-pages` tries to infer.
+
+3. **Verify Branch Content**: After a successful deployment, check that the `gh-pages` branch has the correct contents. You should see the files from your `build` directory at the root and not the source files.
+
+4. **GitHub Pages Configuration**: Ensure that the GitHub Pages source is correctly set to the `gh-pages` branch and root (`/`) directory in your repository settings on GitHub.
+
+If you're still seeing only the `README.md` after confirming the correct files are on the `gh-pages` branch and the GitHub Pages source is set properly, it could be a caching issue. Try clearing your browser cache or waiting a bit longer for GitHub Pages to update.
+
+If none of these steps resolve the issue, there may be an additional problem that needs to be investigated, such as a misconfiguration in the build process or a need to troubleshoot the `gh-pages` package further.
+
+---
+
+**User** _at 2:38 pm, Apr 5, 2024_
+
+I get this error:
+
+```ps1
+🕐[14:34:23]❯ git remote set-url origin https://github.com/InTEGr8or/spell-and-speak.git
+spell-and-speak on  master [!] via  v18.18.0 on ☁️ (us-west-1) 
+🕐[14:36:59]❯ npm run deploy
+
+> spell-and-speak@0.1.0 deploy
+> gh-pages -d build
+
+Error: Failed to get remote.origin.url (task must either be run in a git repository with a configured origin remote or must be configured with the "repo" option).
+  at D:\T3\Projects\self\spell-and-speak\node_modules\gh-pages\lib\git.js:214:13
+  at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+spell-and-speak on  master [!] via  v18.18.0 on ☁️ (us-west-1) took 4s
+```
+
+---
+
+**Codeium** _at 2:38 pm, Apr 5, 2024_
+
+Given the persistent error, it seems that the `gh-pages` package is having trouble identifying your Git repository's remote URL, even after changing it to HTTPS. This could potentially be an issue with the `gh-pages` package itself or with the way it's being invoked.
+
+Let's try a different approach by specifying the repository URL directly in the `deploy` script within your `package.json`:
+
+Update your `package.json` with the following `deploy` script:
+
+```json
+"scripts": {
+  "deploy": "gh-pages -d build -r https://github.com/InTEGr8or/spell-and-speak.git"
+}
+```
+
+After updating the `deploy` script, commit the changes to your `package.json`:
+
+```shell
+git add package.json
+git commit -m "Update deploy script with repo URL"
+git push origin master
+```
+
+Now, try running the deploy command again:
+
+```shell
+npm run deploy
+```
+
+If you still encounter the error, you can check the following:
+
+1. **Ensure you are in the correct directory**: Verify that you are in the root directory of your local Git repository when running the `deploy` command.
+
+2. **Check Git Status**: Make sure your local repository is clean and all changes are committed.
+
+3. **Verify Git Configuration**: You can verify your `origin` remote URL by running:
+
+   ```shell
+   git remote get-url origin
+   ```
+
+If the problem persists, there might be an issue with the `gh-pages` package on your local machine, or there may be a deeper configuration issue. In such a case, consider manually pushing the `build` folder to the `gh-pages` branch as a workaround:
+
+```shell
+# Checkout to a new branch based on your current build
+git checkout --orphan gh-pages
+
+# Remove all files from the previous history
+git rm -rf .
+
+# Copy the build directory contents to the root of the repository
+cp -r build/* .
+
+# Add all files to git
+git add .
+
+# Commit the changes
+git commit -m "Deploy to gh-pages"
+
+# Push to the remote gh-pages branch
+git push origin gh-pages --force
+
+# Return to your default branch
+git checkout master
+```
+
+This manual process essentially replicates what the `gh-pages` package would do automatically. Remember to replace `master` with your default branch name if it's different.
+
+---
+
+**User** _at 2:41 pm, Apr 5, 2024_
+
+I get this:
+
+```ps1
+🕐[14:37:10]❯ npm run deploy
+
+> spell-and-speak@0.1.0 deploy
+> gh-pages -d build -r https://github.com/InTEGr8or/spell-and-speak.git
+
+Error: Failed to get remote.origin.url (task must either be run in a git repository with a configured origin remote or must be configured with the "repo" option).
+  at D:\T3\Projects\self\spell-and-speak\node_modules\gh-pages\lib\git.js:214:13
+  at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+spell-and-speak on  master [!] via  v18.18.0 on ☁️ (us-west-1) 
+```
+
+---
+
+**Codeium** _at 2:41 pm, Apr 5, 2024_
+
+It appears the `gh-pages` package is still having trouble using the remote URL from your Git configuration. As a workaround, you may want to try manually pushing the build to the `gh-pages` branch. Here’s how you can do that:
+
+1. Make sure your `build` directory has the latest production build of your app. If not, run:
+
+   ```shell
+   npm run build
+   ```
+
+2. Navigate to your `build` directory and initialize it as a separate Git repository:
+
+   ```shell
+   cd build
+   git init
+   git add .
+   git commit -m "Initial gh-pages commit"
+   ```
+
+3. Add the remote repository URL and push the `build` directory to the `gh-pages` branch:
+
+   ```shell
+   git remote add origin https://github.com/InTEGr8or/spell-and-speak.git
+   git push -u origin master:gh-pages --force
+   ```
+
+   Make sure to replace `InTEGr8or/spell-and-speak` with the correct GitHub username and repository name. The `--force` flag is used to ensure that the `gh-pages` branch is overwritten with your new build.
+
+4. After pushing to the `gh-pages` branch, navigate back to your main project directory:
+
+   ```shell
+   cd ..
+   ```
+
+5. Now, go to the GitHub repository settings and under the "GitHub Pages" section, check if the site is being built from the `gh-pages` branch.
+
+6. Finally, visit your GitHub Pages URL to see if the application is now live.
+
+Remember to remove the `git init` inside your `build` directory after you’re done, so it doesn’t interfere with your main project repository. 
+
+Note: This process manually pushes the contents of your `build` directory to the `gh-pages` branch, bypassing the `gh-pages` npm package. This should only be used as a last resort if the `gh-pages` package consistently fails to work.
+
+---
+
+**User** _at 2:43 pm, Apr 5, 2024_
+
+That's an interesting idea but it requires two repositories. What if we use GitHub Actions instead? That might be more conventional for gh pages deployments.
+
+---
+
+**Codeium** _at 2:44 pm, Apr 5, 2024_
+
+Using GitHub Actions for deployment is indeed a more conventional and automated approach for deploying to GitHub Pages. To set this up, you'll need to create a GitHub Actions workflow in your repository. Here's how you can do it:
+
+1. In the root of your repository, create a new directory named `.github`, and within it, create another directory named `workflows`.
+
+2. Inside the `workflows` directory, create a new file named `deploy.yml`. This file will define the GitHub Actions workflow.
+
+3. Edit the `deploy.yml` file to include the following workflow definition:
+
+```yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master  # Set this to the name of your default branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14'  # Set this to the node version you are using
+
+    - name: Build and Deploy
+      uses: JamesIves/github-pages-deploy-action@4.1.0
+      with:
+        branch: gh-pages  # The branch the action should deploy to.
+        folder: build     # The folder the action should deploy.
+        token: ${{ secrets.GITHUB_TOKEN }}  # GitHub automatically creates a GITHUB_TOKEN secret to use in your workflow.
+```
+
+4. Commit and push this workflow to your repository:
+
+```shell
+git add .github/workflows/deploy.yml
+git commit -m "Add GitHub Actions for deployment to gh-pages"
+git push origin master
+```
+
+5. The workflow will trigger on push events to your specified branch (which is `master` in the above example). It will install Node.js, build your project, and then deploy the `build` directory to the `gh-pages` branch automatically.
+
+6. You can see the status of your GitHub Actions in the "Actions" tab of your GitHub repository.
+
+If everything is set up correctly, every push to your specified branch will trigger the GitHub Action to build and deploy your project to GitHub Pages. The `GITHUB_TOKEN` is provided by GitHub to authenticate actions run within your repository, so you don't need to manually create a token for deployments.
+
+---
+
+**User** _at 2:55 pm, Apr 5, 2024_
+
+When I push to the `gh-pages` branch I continue to just see the README.md. When I push to `master` I get this error:
+
+```ps1
+Run JamesIves/github-pages-deploy-action@4.1.0
+2
+  with:
+3
+    branch: gh-pages
+4
+    folder: build
+5
+    token: ***
+6
+    clean: true
+7
+
+8
+    GitHub Pages Deploy Action 🚀
+9
+
+10
+    🚀 Getting Started Guide: https://github.com/marketplace/actions/deploy-to-github-pages
+11
+    ❓ Discussions / Q&A: https://github.com/JamesIves/github-pages-deploy-action/discussions
+12
+    🔧 Report a Bug: https://github.com/JamesIves/github-pages-deploy-action/issues
+13
+
+14
+    📣 Maintained by James Ives: https://jamesiv.es
+15
+    💖 Support: https://github.com/sponsors/JamesIves
+16
+Checking configuration and starting deployment… 🚦
+17
+Error: The directory you're trying to deploy named /home/runner/work/spell-and-speak/spell-and-speak/build doesn't exist. Please double check the path and any prerequisite build scripts and try again. ❗
+18
+Deployment failed! ❌
+19
+Warning: The `set-output` command is deprecated and will be disabled soon. Please upgrade to using Environment Files. For more information see: https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
+```
+
+---
+
+**Codeium** _at 2:55 pm, Apr 5, 2024_
+
+The error message from the GitHub Actions log indicates that the `build` directory does not exist in your repository when the action runs. This typically means that the build process (which should generate the `build` directory) either didn't run, didn't complete successfully, or the `build` directory isn't being generated where the action expects it to be.
+
+Here's a checklist to resolve this issue:
+
+1. **Ensure your project builds locally**: Before pushing to GitHub, confirm that running `npm run build` locally generates the `build` directory at the root of your project.
+
+2. **Check your `.gitignore`**: Sometimes, the `build` directory is listed in the `.gitignore` file, which means it won't be committed or pushed to GitHub. Your GitHub Actions workflow should handle building the application, so the `build` directory does not need to be committed; just make sure it's not ignored when the action tries to build it.
+
+3. **Review your build script**: Make sure your `package.json` has a `build` script that correctly generates the `build` directory. For example:
+
+   ```json
+   "scripts": {
+     "build": "react-scripts build",
+     // other scripts...
+   }
+   ```
+
+4. **Correct GitHub Actions workflow**: Ensure your workflow is running the build script before the deployment step. Here's an example workflow:
+
+   ```yaml
+   name: Deploy to GitHub Pages
+
+   on:
+     push:
+       branches:
+         - master  # Trigger on changes to the master branch
+
+   jobs:
+     build-and-deploy:
+       runs-on: ubuntu-latest
+       steps:
+       - name: Checkout
+         uses: actions/checkout@v2
+
+       - name: Install Node.js
+         uses: actions/setup-node@v1
+         with:
+           node-version: '14'  # Use the node version that matches your development environment
+
+       - name: Install Dependencies
+         run: npm install
+
+       - name: Build
+         run: npm run build  # Generate the build directory
+
+       - name: Deploy
+         uses: JamesIves/github-pages-deploy-action@4.1.0
+         with:
+           branch: gh-pages  # The branch the action should deploy to
+           folder: build     # The folder the action should deploy
+           token: ${{ secrets.GITHUB_TOKEN }}  # GitHub automatically creates a GITHUB_TOKEN secret to use in your workflow
+   ```
+
+5. **Commit and push workflow changes**: If you made any changes to the workflow file, commit and push those changes to your repository.
+
+6. **Monitor GitHub Actions**: After pushing the changes, check the "Actions" tab again to see if the workflow completes successfully.
+
+By ensuring the build script is run as part of the workflow before the deploy step, the `build` directory should be created by the GitHub Actions runner and deployed to the `gh-pages` branch.
