@@ -1106,3 +1106,64 @@ if ('speechSynthesis' in window) {
 ```
 
 Keep in mind that the Web Speech API's `speechSynthesis` function is asynchronous and may not start immediately, especially if there are other utterances in the queue. You might want to manage the state of the speech synthesis, such as canceling current speech before speaking a new word, to ensure the correct behavior in your application.
+
+---
+
+**User** _at 2:04 pm, Apr 5, 2024_
+
+Ok, it is functioning in a minimal proof-of-concenpt fashion.
+
+Now I want to deploy it on GitHub Pages. I have the GitHub CLI installed and I think there are some CLI functions that will allow me to turn this GitHub repo into a published GitHub Pages application. Can you help me with that?
+
+---
+
+**Codeium** _at 2:04 pm, Apr 5, 2024_
+
+Certainly! To deploy your React application on GitHub Pages using the GitHub CLI, you'll need to follow these steps:
+
+1. **Build your React app**: First, create a production build of your app.
+
+   ```shell
+   npm run build
+   ```
+
+2. **Install `gh-pages`**: If you haven't already, install the `gh-pages` package to help automate the deployment process.
+
+   ```shell
+   npm install gh-pages --save-dev
+   ```
+
+3. **Configure `package.json`**: Add a `homepage` property to your `package.json` file with the URL where your project will be hosted. The URL typically looks like this: `https://{username}.github.io/{repo-name}`. Also, add scripts to deploy the app using `gh-pages`.
+
+   ```json
+   {
+     "homepage": "https://<username>.github.io/<repository>/",
+     "scripts": {
+       // ... other scripts
+       "predeploy": "npm run build",
+       "deploy": "gh-pages -d build"
+     }
+   }
+   ```
+
+4. **Deploy to GitHub Pages**: Use the `deploy` script to push your build folder to the `gh-pages` branch of your repository.
+
+   ```shell
+   npm run deploy
+   ```
+
+5. **Set up GitHub Pages in your repository settings**: You'll need to go to your GitHub repository settings and set the GitHub Pages source to the `gh-pages` branch. However, you can also do this using the GitHub CLI:
+
+   ```shell
+   gh repo edit <owner>/<repository> --default-branch gh-pages
+   ```
+
+   Replace `<owner>` with your GitHub username and `<repository>` with your repository name.
+
+6. **Verify the deployment**: After the CLI command completes, navigate to the `homepage` URL you specified in your `package.json` to see if your application is live.
+
+Note: The GitHub CLI does not directly provide a command to set up GitHub Pages; you will need to use the GitHub website to configure the source branch for GitHub Pages or use the `gh-pages` npm package as shown.
+
+Also, remember to commit and push any changes you made to your `package.json` and other configuration files before deploying.
+
+If you run into any issues or need further assistance, please let me know!
