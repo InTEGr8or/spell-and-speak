@@ -8,6 +8,30 @@ function App() {
   const [currentWord, setCurrentWord] = useState('');
   const [characterChips, setCharacterChips] = useState([]);
 
+  const sayWord = () => {
+    const inputBoxes = document.querySelectorAll('.input-box');
+    let wordToSay = '';
+
+    inputBoxes.forEach(box => {
+      // If the box has a child node (the character chip), use its text content
+      // Otherwise, use a space to represent an empty box
+      wordToSay += box.childNodes[0] ? box.childNodes[0].textContent : ' ';
+    });
+
+    // Use the SpeechSynthesis API to pronounce the word
+    const utterance = new SpeechSynthesisUtterance(wordToSay);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleSayWord = () => {
+    if ('speechSynthesis' in window) {
+      // Browser supports speech synthesis
+      sayWord();
+    } else {
+      // Handle the error, possibly by informing the user
+      console.error('Speech synthesis not supported in this browser.');
+    }
+  }
   const handleDragStart = (e) => {
     e.dataTransfer.setData('text/plain', e.target.id);
     // Optionally, add a drag image and set an offset to position it under the pointer
@@ -71,6 +95,7 @@ function App() {
     if (targetBox) {
       // If we have a target box, append the character chip to it
       targetBox.appendChild(e.target);
+      handleSayWord();
     } else {
       // If no target box was found, reset the drag or move back to original position
       // This logic depends on how you want to handle an unsuccessful drop
