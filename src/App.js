@@ -1,6 +1,6 @@
 // App.js or your main component file
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import wordList from './word-list.json';
 
@@ -8,7 +8,7 @@ function App() {
   const [currentWord, setCurrentWord] = useState('');
   const [characterChips, setCharacterChips] = useState([]);
 
-  const sayWord = () => {
+  const sayWord = useCallback(() => {
     const inputBoxes = document.querySelectorAll('.input-box');
     let wordToSay = '';
 
@@ -21,9 +21,9 @@ function App() {
     // Use the SpeechSynthesis API to pronounce the word
     const utterance = new SpeechSynthesisUtterance(wordToSay);
     window.speechSynthesis.speak(utterance);
-  };
+  }, []);
 
-  const handleSayWord = () => {
+  const handleSayWord = useCallback(() => {
     if ('speechSynthesis' in window) {
       // Browser supports speech synthesis
       sayWord();
@@ -31,7 +31,8 @@ function App() {
       // Handle the error, possibly by informing the user
       console.error('Speech synthesis not supported in this browser.');
     }
-  }
+  }, [sayWord]);
+
   const handleDragStart = (e) => {
     e.dataTransfer.setData('text/plain', e.target.id);
     // Optionally, add a drag image and set an offset to position it under the pointer
@@ -64,7 +65,8 @@ function App() {
     e.target.style.top = `${touchLocation.pageY - e.target.offsetHeight / 2}px`;
   };
 
-  const handleTouchEnd = (e) => {
+
+  const handleTouchEnd = useCallback((e) => {
     // Get the location of the touch event
     const touchLocation = e.changedTouches[0];
 
@@ -106,7 +108,7 @@ function App() {
     e.target.style.position = '';
     e.target.style.left = '';
     e.target.style.top = '';
-  };
+  }, [handleSayWord]);
 
   useEffect(() => {
     // Pick a new word from the list
@@ -144,7 +146,7 @@ function App() {
         // Remove any other event listeners you added
       });
     };
-  }, [characterChips]); // Dependency array includes characterChips to re-run the effect when it changes
+  }, [characterChips, handleTouchEnd]); // Dependency array includes characterChips to re-run the effect when it changes
 
   return (
     <div className="app">
