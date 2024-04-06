@@ -3,10 +3,39 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import wordList from './word-list.json';
+import CharacterChip from './components/CharacterChip/CharacterChip';
 
 function App() {
   const [currentWord, setCurrentWord] = useState('');
   const [characterChips, setCharacterChips] = useState([]);
+  const [inputBoxChips, setInputBoxChips] = useState({});
+
+
+  const handleDrop = (event, targetInputBoxId) => {
+    // Prevent the default behavior
+    event.preventDefault();
+
+    // Get the character-chip that is being dragged
+    const draggedChipId = event.dataTransfer.getData("text/plain");
+
+    // Update state to reflect the new arrangement of character chips
+    setInputBoxChips(prevState => {
+      // Find if the dragged chip was already in an input box
+      const currentBoxId = Object.keys(prevState).find(key => prevState[key] === draggedChipId);
+      // If so, set that input box to null (remove the chip)
+      if (currentBoxId) {
+        prevState[currentBoxId] = null;
+      }
+
+      // Move the existing chip in the target input box back to the tray
+      const existingChipId = prevState[targetInputBoxId];
+      // Set the target input box to the dragged chip
+      prevState[targetInputBoxId] = draggedChipId;
+
+      // Return the updated state
+      return { ...prevState };
+    });
+  };
 
   const sayWord = useCallback(() => {
     const inputBoxes = document.querySelectorAll('.input-box');
@@ -45,14 +74,6 @@ function App() {
 
   const handleDragOver = (e) => {
     e.preventDefault(); // Necessary to allow dropping
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const droppedCharacter = e.dataTransfer.getData('text/plain');
-    const characterChip = document.getElementById(droppedCharacter);
-    // Append the character chip to the input box or handle as needed
-    e.target.appendChild(characterChip);
   };
 
   const handleTouchMove = (e) => {
@@ -114,6 +135,12 @@ function App() {
     const newWord = wordList[Math.floor(Math.random() * wordList.length)];
     setCurrentWord(newWord);
 
+    // Create initial state for inputBoxChips based on the length of the new word
+    const newInputBoxChips = {};
+    for (let i = 0; i < newWord.length; i++) {
+      newInputBoxChips[`input-box-${i}`] = null; // Initially, no input boxes have chips
+    }
+
     // Create character chips for the new word
     const characters = newWord.split('');
     // Add 50% extra random characters
@@ -125,6 +152,8 @@ function App() {
 
     // Shuffle the array of characters
     const shuffledCharacters = characters.sort(() => 0.5 - Math.random());
+
+    setInputBoxChips(newInputBoxChips);
     setCharacterChips(shuffledCharacters);
   }, []);
 
@@ -158,24 +187,38 @@ function App() {
       </div>
       <div 
        className="input-boxes">
-        {currentWord.split('').map((_, index) => (
-          <div key={index}
-               onDragOver={handleDragOver}
-               onDrop={handleDrop}
-               className="input-box"></div>
-        ))}
+        {currentWord.split('').map((_, index) => {
+            const boxId = `input-box-${index}`;
+            return (
+
+            <div
+              key={boxId}
+              id={boxId}
+              onDragOver={handleDragOver}
+              onDrop={(event) => handleDrop(event, boxId)}
+              className="input-box"
+              >
+                {inputBoxChips[boxId] && (
+                  <CharacterChip
+                    id={inputBoxChips[boxId]}
+                    // other props
+                  />
+                )}
+            </div>
+          );
+        })}
       </div>
       <div className="character-tray">
         {characterChips.map((char, index) => (
-          <div key={index}
-               id={`character-chip-${index}`}
-               className="character-chip"
-               draggable="true"
-               onDragStart={handleDragStart}>
-            {char}
-          </div>
+          <CharacterChip
+            key={index}
+            id={`character-chip-${index}`}
+            char={char}
+            onDragStart={handleDragStart}
+          />
         ))}
       </div>
+
     </div>
   );
 }
