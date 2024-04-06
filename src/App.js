@@ -121,7 +121,7 @@ const handleTouchEnd = useCallback((e) => {
   e.target.style.position = '';
   e.target.style.left = '';
   e.target.style.top = '';
-}, [handleSayWord]);
+}, [handleSayWord, processChipDrop]);
 
   useEffect(() => {
     // Pick a new word from the list
