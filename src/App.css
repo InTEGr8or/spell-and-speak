@@ -50,24 +50,6 @@
   max-width: 200%;
 }
 
-.character-chip {
-  width: 60px;
-  height: 60px;
-  border: 1px solid black;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  cursor: grab;
-  background-color: bisque;
-  .correct-place {
-    background-color: lightgreen;
-  }
-  .dragging {
-    opacity: 0.5;
-  }
-}
-
 @media (max-width: 600px) { /* Example breakpoint for mobile devices */
   .character-tray {
     /* justify-content: flex-start; Align to the start on small screens */

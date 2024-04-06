@@ -28,7 +28,7 @@ function App() {
       }
 
       // Move the existing chip in the target input box back to the tray
-      const existingChipId = prevState[targetInputBoxId];
+      // const existingChipId = prevState[targetInputBoxId];
       // Set the target input box to the dragged chip
       prevState[targetInputBoxId] = draggedChipId;
 
