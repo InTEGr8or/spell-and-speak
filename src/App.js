@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import wordList from './word-list.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
+import './components/CharacterChip/CharacterChip.css';
 
 function App() {
   const [currentWord, setCurrentWord] = useState('');
@@ -12,31 +13,12 @@ function App() {
 
 
   const handleDrop = (event, targetInputBoxId) => {
-    // Prevent the default behavior
     event.preventDefault();
-
-    // Get the character-chip that is being dragged
     const draggedChipId = event.dataTransfer.getData("text/plain");
-
-    // Update state to reflect the new arrangement of character chips
-    setInputBoxChips(prevState => {
-      // Find if the dragged chip was already in an input box
-      const currentBoxId = Object.keys(prevState).find(key => prevState[key] === draggedChipId);
-      // If so, set that input box to null (remove the chip)
-      if (currentBoxId) {
-        prevState[currentBoxId] = null;
-      }
-
-      // Move the existing chip in the target input box back to the tray
-      // const existingChipId = prevState[targetInputBoxId];
-      // Set the target input box to the dragged chip
-      prevState[targetInputBoxId] = draggedChipId;
-
-      // Return the updated state
-      return { ...prevState };
-    });
+    processChipDrop(draggedChipId, targetInputBoxId);
   };
 
+  // Say the characters in the input boxes
   const sayWord = useCallback(() => {
     const inputBoxes = document.querySelectorAll('.input-box');
     let wordToSay = '';
@@ -86,49 +68,60 @@ function App() {
     e.target.style.top = `${touchLocation.pageY - e.target.offsetHeight / 2}px`;
   };
 
-  const handleTouchEnd = useCallback((e) => {
-    // Get the location of the touch event
-    const touchLocation = e.changedTouches[0];
+  const processChipDrop = (draggedChipId, targetInputBoxId) => {
+    setInputBoxChips(prevState => {
+      const newState = { ...prevState };
 
-    // Find all input boxes
-    const inputBoxes = document.querySelectorAll('.input-box');
-
-    // Get the touch point coordinates
-    const touchPoint = {
-      x: touchLocation.clientX,
-      y: touchLocation.clientY
-    };
-
-    // Determine if touch point is inside any input box
-    let targetBox = null;
-    inputBoxes.forEach(box => {
-      const boxRect = box.getBoundingClientRect();
-      if (
-        touchPoint.x >= boxRect.left &&
-        touchPoint.x <= boxRect.right &&
-        touchPoint.y >= boxRect.top &&
-        touchPoint.y <= boxRect.bottom
-      ) {
-        // The touch point is inside this box
-        targetBox = box;
+      // Find if the dragged chip was already in an input box
+      const currentBoxId = Object.keys(newState).find(key => newState[key] === draggedChipId);
+      if (currentBoxId) {
+        newState[currentBoxId] = null; // Remove the chip from its current input box
       }
-    });
 
-    if (targetBox) {
-      // If we have a target box, append the character chip to it
-      targetBox.appendChild(e.target);
+      // If there is an existing chip in the target input box, move it back to the tray
+      const existingChipId = newState[targetInputBoxId];
+      if (existingChipId) {
+        setCharacterChips(prevChips => [...prevChips, existingChipId]);
+      }
+
+      // Set the target input box to the dragged chip
+      newState[targetInputBoxId] = draggedChipId;
+
+      // Perform any additional actions, like saying the word
       handleSayWord();
-    } else {
-      // If no target box was found, reset the drag or move back to original position
-      // This logic depends on how you want to handle an unsuccessful drop
-    }
 
-    // Reset styles or any state as needed
-    e.target.classList.remove('dragging');
-    e.target.style.position = '';
-    e.target.style.left = '';
-    e.target.style.top = '';
-  }, [handleSayWord]);
+      return newState;
+    });
+  };
+
+const handleTouchEnd = useCallback((e) => {
+  const touchLocation = e.changedTouches[0];
+  const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
+  const draggedChipId = e.target.id;
+
+  const inputBoxes = document.querySelectorAll('.input-box');
+  const targetBox = Array.from(inputBoxes).find(box => {
+    const boxRect = box.getBoundingClientRect();
+    return (
+      touchPoint.x >= boxRect.left &&
+      touchPoint.x <= boxRect.right &&
+      touchPoint.y >= boxRect.top &&
+      touchPoint.y <= boxRect.bottom
+    );
+  });
+
+  if (targetBox) {
+    processChipDrop(draggedChipId, targetBox.id);
+  } else {
+    // Logic for unsuccessful drop (e.g., move back to original position)
+  }
+
+  // Reset styles or any state as needed
+  e.target.classList.remove('dragging');
+  e.target.style.position = '';
+  e.target.style.left = '';
+  e.target.style.top = '';
+}, [handleSayWord]);
 
   useEffect(() => {
     // Pick a new word from the list

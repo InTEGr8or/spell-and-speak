@@ -2144,3 +2144,706 @@ function App() {
 In this example, `CharacterChip` would be a component that represents your draggable character chips. You would need to adjust the actual rendering based on your specific implementation.
 
 Remember to handle the touch events in a similar state-based approach. The key takeaway is that you should use React state to keep track of which `character-chip` is in which `input-box`, and update that state when changes occur due to drag-and-drop actions. This will ensure that the React component re-renders appropriately in response to state changes.
+
+---
+
+**User** _at 6:37 pm, Apr 5, 2024_
+
+Should I declare this at the top of the @fn:App() ?
+
+```js
+  const inputBoxes = document.querySelectorAll('.input-box');
+```
+
+---
+
+**Codeium** _at 6:37 pm, Apr 5, 2024_
+
+No, you should not use `document.querySelectorAll` within the body of a React functional component to select elements, particularly not at the top level of the component function. This is because the DOM elements are not guaranteed to exist when the component function executes, and direct DOM manipulation is counter to React's declarative approach and can lead to bugs and inconsistencies in your application's state.
+
+Instead, in React, you would typically use state and props to manage elements. For the `inputBoxes` state in your `App` component, consider defining the structure of your input boxes in a way that doesn't rely on DOM queries.
+
+Here's how you can define the `inputBoxChips` state without querying the DOM:
+
+```javascript
+function App() {
+  // Define the initial state for inputBoxChips based on a predefined number of input boxes
+  const initialInputBoxChips = {};
+  const numberOfInputBoxes = 5; // Define the number of input boxes you have
+
+  for (let i = 0; i < numberOfInputBoxes; i++) {
+    initialInputBoxChips[`input-box-${i}`] = null; // Initially, no input boxes have chips
+  }
+
+  const [inputBoxChips, setInputBoxChips] = useState(initialInputBoxChips);
+
+  // ... rest of your component logic
+}
+```
+
+This example assumes you have a fixed number of input boxes (in this case, `5`). Each input box is identified by a unique key (like `'input-box-0'`, `'input-box-1'`, etc.), and the `inputBoxChips` state holds the mapping of which character chip (if any) is currently in each input box. You'll need to adapt the `numberOfInputBoxes` and the keys used in `initialInputBoxChips` to fit your application.
+
+When rendering your input boxes, you should rely on this state to determine the contents of each box, rather than querying the DOM:
+
+```javascript
+return (
+  <>
+    {/* Render input boxes */}
+    {Object.keys(inputBoxChips).map(boxId => (
+      <div
+        key={boxId}
+        id={boxId}
+        className="input-box"
+        onDrop={(event) => handleDrop(event, boxId)}
+        onDragOver={handleDragOver}
+        // ... other props
+      >
+        {inputBoxChips[boxId] && (
+          // Render the character chip for this input box
+        )}
+      </div>
+    ))}
+    {/* ... other components */}
+  </>
+);
+```
+
+In this way, React maintains a virtual representation of the DOM (the "virtual DOM"), and you manipulate your UI by changing state and props, rather than directly interacting with the DOM.
+
+---
+
+**User** _at 6:42 pm, Apr 5, 2024_
+
+I can't set a static `numberOfInputBoxes` because that is based on the length of `currentWord`, which is set on line 137 of `App.js` in the `useEffect()`
+
+---
+
+**Codeium** _at 6:42 pm, Apr 5, 2024_
+
+Understood. If the number of input boxes is dynamic and based on the length of `currentWord`, you can create the initial state for `inputBoxChips` using the length of `currentWord`. Here's how you can adjust your `App` component to initialize `inputBoxChips` based on the `currentWord`:
+
+1. Initialize `inputBoxChips` with a function that depends on `currentWord`.
+2. Update `inputBoxChips` within `useEffect` when `currentWord` changes.
+
+```javascript
+function App() {
+  const [currentWord, setCurrentWord] = useState('');
+  // Initialize inputBoxChips state as an empty object
+  const [inputBoxChips, setInputBoxChips] = useState({});
+
+  useEffect(() => {
+    // Pick a new word from the list
+    const newWord = wordList[Math.floor(Math.random() * wordList.length)];
+    setCurrentWord(newWord);
+
+    // Create initial state for inputBoxChips based on the length of the new word
+    const newInputBoxChips = {};
+    for (let i = 0; i < newWord.length; i++) {
+      newInputBoxChips[`input-box-${i}`] = null; // Initially, no input boxes have chips
+    }
+    setInputBoxChips(newInputBoxChips);
+
+    // ... rest of your useEffect logic for setting up characters
+  }, []); // If you want this to run only once when the component mounts, keep the dependency array empty
+
+  // ... rest of the component logic
+
+  return (
+    <>
+      {/* Render input boxes based on currentWord */}
+      {currentWord.split('').map((_, index) => {
+        const boxId = `input-box-${index}`;
+        return (
+          <div
+            key={boxId}
+            id={boxId}
+            className="input-box"
+            onDrop={(event) => handleDrop(event, boxId)}
+            onDragOver={handleDragOver}
+            // ... other props
+          >
+            {inputBoxChips[boxId] && (
+              // Render the character chip for this input box
+            )}
+          </div>
+        );
+      })}
+      {/* ... other components */}
+    </>
+  );
+}
+```
+
+In this updated code:
+
+- The `currentWord` state is initialized to an empty string.
+- A `useEffect` hook is used to set both `currentWord` and `inputBoxChips` when the component mounts or when the word changes.
+- The `inputBoxChips` state is an object where the keys are dynamically generated based on the indices of the letters in the `currentWord`.
+- The input boxes are rendered by mapping over `currentWord.split('')`, creating a box ID based on the index, and using that ID to render the box and any associated character chip.
+
+With this approach, the number of input boxes will always match the length of `currentWord`, and the state will be managed in a way that is consistent with React's best practices. Remember to replace the comment `// Render the character chip for this input box` with the actual code to render your `CharacterChip` component, passing the necessary props.
+
+---
+
+**User** _at 6:56 pm, Apr 5, 2024_
+
+I keep getting this error:
+
+```html
+ERROR
+[eslint] 
+src\App.js
+  Line 10:54:   'inputBoxes' is not defined     no-undef
+  Line 202:20:  'CharacterChip' is not defined  react/jsx-no-undef
+```
+
+---
+
+**Codeium** _at 6:57 pm, Apr 5, 2024_
+
+The error messages provided by ESLint indicate two issues:
+
+1. `'inputBoxes' is not defined`: This means that the variable `inputBoxes` is being used in your code without being declared anywhere. This could be coming from the previous example where `inputBoxes` was used to illustrate rendering logic. Since the number of input boxes is dynamic and based on the length of `currentWord`, you should not use a separate `inputBoxes` variable. Instead, directly use `currentWord` to determine the number of input boxes.
+
+2. `'CharacterChip' is not defined`: This means that you are trying to use a `CharacterChip` component in your JSX, but it has not been defined or imported in your `App.js` file.
+
+Here's how you can resolve these errors:
+
+For the first error, remove any reference to `inputBoxes` and use the `currentWord` to render the input boxes:
+
+```javascript
+// Replace this:
+// {inputBoxes.map(boxId => { ... }
+
+// With this:
+{currentWord.split('').map((_, index) => {
+  const boxId = `input-box-${index}`;
+  return (
+    <div
+      key={boxId}
+      id={boxId}
+      className="input-box"
+      onDrop={(event) => handleDrop(event, boxId)}
+      onDragOver={handleDragOver}
+      // other props
+    >
+      {/* ... */}
+    </div>
+  );
+})}
+```
+
+For the second error, ensure that you have a `CharacterChip` component defined or imported in your `App.js` file. If `CharacterChip` is a separate component, you should import it like this:
+
+```javascript
+import CharacterChip from './CharacterChip'; // Adjust the path to where your CharacterChip component is defined
+```
+
+Then you can use `CharacterChip` in your JSX:
+
+```javascript
+{currentWord.split('').map((_, index) => {
+  const boxId = `input-box-${index}`;
+  return (
+    <div
+      key={boxId}
+      id={boxId}
+      className="input-box"
+      onDrop={(event) => handleDrop(event, boxId)}
+      onDragOver={handleDragOver}
+    >
+      {inputBoxChips[boxId] && (
+        <CharacterChip
+          id={inputBoxChips[boxId]}
+          // other props you need to pass to CharacterChip
+        />
+      )}
+    </div>
+  );
+})}
+```
+
+Make sure the `CharacterChip` component is correctly defined in its own file and exported, or if it's in the same file, ensure it's defined above the `App` component.
+
+After making these corrections, the ESLint errors should be resolved. If `CharacterChip` is a component that you have yet to create, you will need to define it or remove the reference to it until you have the component code ready.
+
+---
+
+**User** _at 6:59 pm, Apr 5, 2024_
+
+The error is throwing from this line:
+
+```js
+ const [inputBoxChips, setInputBoxChips] = useState(inputBoxes.reduce((acc, id) => {
+  acc[id] = null; // Initially, no input boxes have chips
+  return acc;
+ }, {}));
+```
+
+---
+
+**Codeium** _at 7:00 pm, Apr 5, 2024_
+
+The error is indicating that `inputBoxes` is not defined in the scope of your `useState` call. To initialize `inputBoxChips` based on the current word, you should do this within the `useEffect` hook after you have set the new word. Since the number of input boxes is dependent on the `currentWord`, you can't initialize `inputBoxChips` directly with `inputBoxes.reduce` outside of `useEffect`.
+
+Here's how you can adjust the initialization of `inputBoxChips`:
+
+```javascript
+function App() {
+  const [currentWord, setCurrentWord] = useState('');
+  // Initialize inputBoxChips state as an empty object
+  const [inputBoxChips, setInputBoxChips] = useState({});
+
+  useEffect(() => {
+    // Pick a new word from the list
+    const newWord = wordList[Math.floor(Math.random() * wordList.length)];
+    setCurrentWord(newWord);
+
+    // Create initial state for inputBoxChips based on the length of the new word
+    const newInputBoxChips = {};
+    for (let i = 0; i < newWord.length; i++) {
+      newInputBoxChips[`input-box-${i}`] = null; // Initially, no input boxes have chips
+    }
+    setInputBoxChips(newInputBoxChips);
+
+    // ... rest of your useEffect logic for setting up characters
+  }, []); // Dependency array is empty so this runs only once on mount
+
+  // ... rest of the component logic
+
+  return (
+    // ... JSX
+  );
+}
+```
+
+In this updated code, `inputBoxChips` is initialized as an empty object. The `useEffect` hook is then responsible for setting up the initial state for `inputBoxChips` based on the length of the `currentWord`. You should remove any reference to `inputBoxes.reduce` from the `useState` call, as shown above.
+
+Now, when rendering the input boxes, you use the keys of the `inputBoxChips` state object to render your input boxes:
+
+```javascript
+return (
+  <>
+    {/* Render input boxes based on currentWord */}
+    {Object.keys(inputBoxChips).map((boxId, index) => (
+      <div
+        key={boxId}
+        id={boxId}
+        className="input-box"
+        onDrop={(event) => handleDrop(event, boxId)}
+        onDragOver={handleDragOver}
+      >
+        {inputBoxChips[boxId] && (
+          // Render the character chip for this input box
+        )}
+      </div>
+    ))}
+    {/* ... other components */}
+  </>
+);
+```
+
+Make sure to replace the comment with the actual code to render your `CharacterChip` component, passing the necessary props. With this pattern, you avoid using a non-existent `inputBoxes` variable and instead rely on the state and props managed by React.
+
+---
+
+**User** _at 7:04 pm, Apr 5, 2024_
+
+But I need to add extra random characters to the `character-tray` so my `useEffect()` looks like this:
+
+```js
+ useEffect(() => {
+  // Pick a new word from the list
+  const newWord = wordList[Math.floor(Math.random() * wordList.length)];
+  setCurrentWord(newWord);
+
+  // Create initial state for inputBoxChips based on the length of the new word
+  const newInputBoxChips = {};
+  for (let i = 0; i < newWord.length; i++) {
+   newInputBoxChips[`input-box-${i}`] = null; // Initially, no input boxes have chips
+  }
+  setInputBoxChips(newInputBoxChips);
+
+  // Create character chips for the new word
+  const characters = newWord.split('');
+  // Add 50% extra random characters
+  const extraChars = Math.ceil(characters.length * 0.5);
+  for (let i = 0; i < extraChars; i++) {
+   const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+   characters.push(randomChar);
+  }
+
+  // Shuffle the array of characters
+  const shuffledCharacters = characters.sort(() => 0.5 - Math.random());
+  setCharacterChips(shuffledCharacters);
+ }, []);
+```
+
+---
+
+**Codeium** _at 7:05 pm, Apr 5, 2024_
+
+Given your `useEffect` hook, you're correctly setting the `currentWord` and initializing `inputBoxChips` based on its length. You're also adding extra random characters to the `character-tray` and shuffling them before setting `characterChips`. The logic within your `useEffect` hook looks good for the purpose you described.
+
+However, since the `useEffect` hook has an empty dependency array `[]`, it will only run once when the component mounts. If you want to pick a new word and reset the state when something changes (like when the user requests a new word), you'll need to include that trigger in the dependency array.
+
+To ensure that `inputBoxChips` reflects the current state of `currentWord` outside of the `useEffect`, you should consider initializing `inputBoxChips` right after you update `currentWord`. Here's how you can do it:
+
+```javascript
+function App() {
+  const [currentWord, setCurrentWord] = useState('');
+  const [inputBoxChips, setInputBoxChips] = useState({});
+  const [characterChips, setCharacterChips] = useState([]);
+
+  useEffect(() => {
+    // ... your existing logic to pick a new word and set up character chips
+
+    // After setting the currentWord, set up the input boxes
+    setInputBoxChips(newInputBoxChips);
+    // Shuffle and set character chips
+    setCharacterChips(shuffledCharacters);
+  }, []); // The empty array means this will only run once
+
+  // ... the rest of your component
+
+  return (
+    // ... JSX for rendering input boxes and character tray
+    // Use the inputBoxChips and characterChips state to render the UI
+  );
+}
+```
+
+When you want to trigger a new word and reset the game state, you'd update the `currentWord`, which should then trigger the `useEffect` to run again if you include `currentWord` in the dependency array. However, be careful with this because you may end up creating an infinite loop if you're not handling the state updates correctly.
+
+For now, with the empty dependency array, the `useEffect` will run once on component mount and will initialize the `inputBoxChips` and `characterChips` state based on the first word picked.
+
+When rendering the character chips in the `character-tray`, you'll loop over the `characterChips` array and render them accordingly. Make sure to handle the logic for dragging and dropping the chips between the tray and the input boxes, which should update the state so the UI stays in sync with the user's actions.
+
+---
+
+**User** _at 7:11 pm, Apr 5, 2024_
+
+Ok, now I am getting this error:
+
+```
+ERROR
+[eslint] 
+src\App.js
+  Line 201:20:  'CharacterChip' is not defined  react/jsx-no-undef
+```
+
+My `App()` returns this:
+
+```js
+ return (
+  <div className="app">
+   <header className="header">
+    SPELL-AND-SPEAK
+   </header>
+   <span className="audio-icon">🔊</span>
+   <div className="word-display">
+    {currentWord}
+   </div>
+   <div 
+    className="input-boxes">
+    {currentWord.split('').map((_, index) => {
+      const boxId = `input-box-${index}`;
+      return (
+
+      <div
+       key={boxId}
+       id={boxId}
+       onDragOver={handleDragOver}
+       onDrop={(event) => handleDrop(event, boxId)}
+       className="input-box"
+       >
+        {inputBoxChips[boxId] && (
+         <CharacterChip
+          id={inputBoxChips[boxId]}
+          // other props
+         />
+        )}
+      </div>
+     );
+    })}
+   </div>
+   <div className="character-tray">
+    {characterChips.map((char, index) => (
+     <div key={index}
+        id={`character-chip-${index}`}
+        className="character-chip"
+        draggable="true"
+        onDragStart={handleDragStart}>
+      {char}
+     </div>
+    ))}
+   </div>
+  </div>
+ );
+```
+
+---
+
+**Codeium** _at 7:12 pm, Apr 5, 2024_
+
+The error you're getting, `'CharacterChip' is not defined`, means that you are trying to use a component called `CharacterChip` in your JSX, but ESLint can't find a definition for it. This could be because you haven't imported it or you haven't defined it in your `App.js` file or in any imported file.
+
+To fix this error, you need to ensure that `CharacterChip` is a defined React component. There are two main ways to do this:
+
+1. If `CharacterChip` is supposed to be a separate component in its own file, make sure that you import it at the top of your `App.js` file:
+
+```javascript
+import CharacterChip from './CharacterChip'; // Adjust the path to the actual location of the file
+```
+
+2. If `CharacterChip` is supposed to be defined within the same file (`App.js`), you need to define it before you use it in your component's return statement:
+
+```javascript
+const CharacterChip = ({ id, ...otherProps }) => {
+  // Define what a CharacterChip looks like
+  return (
+    <div className="character-chip" {...otherProps}>
+      {/* Content of CharacterChip based on props */}
+    </div>
+  );
+};
+```
+
+Make sure the `CharacterChip` component is defined or imported correctly before you try to use it in the render method of your `App` component.
+
+Once you have defined or imported `CharacterChip`, the ESLint error should be resolved. If `CharacterChip` is a component you haven't created yet, you'll need to create it. If it's not supposed to be a component and was used by mistake, you should remove the reference from your JSX.
+
+---
+
+**User** _at 7:24 pm, Apr 5, 2024_
+
+I thought I was creating `characterChips` in this other `useEffect()`:
+
+This code was the product of troubleshooting the earlier dependency warning that was preventing deployment to GitHub Pages:
+
+```js
+ useEffect(() => {
+  // Attach touch event listeners
+  const characterChipsElements = document.querySelectorAll('.character-chip');
+  characterChipsElements.forEach((chip) => {
+   chip.addEventListener('touchmove', handleTouchMove);
+   chip.addEventListener('touchend', handleTouchEnd);
+   // Add any other event listeners you need here
+  });
+
+  // Cleanup function to remove event listeners
+  return () => {
+   characterChipsElements.forEach((chip) => {
+    chip.removeEventListener('touchmove', handleTouchMove);
+    chip.removeEventListener('touchend', handleTouchEnd);
+    // Remove any other event listeners you added
+   });
+  };
+ }, [characterChips, handleTouchEnd]); // Dependency array includes characterChips to re-run the effect when it changes
+```
+
+---
+
+**Codeium** _at 7:24 pm, Apr 5, 2024_
+
+The `useEffect` hook you've shown is used to attach touch event listeners to elements with the class `.character-chip`. These event listeners enable touch functionality like drag and drop on touch devices. However, this is separate from the definition of a React component.
+
+The error you're seeing (`'CharacterChip' is not defined`) pertains to the fact that there is no React component named `CharacterChip` defined or imported in your `App.js` file. The `useEffect` hook does not define a React component; it's a hook for side effects like attaching or cleaning up event listeners.
+
+The `characterChips` you're creating in your `useEffect` is an array of characters, not React components. When you map over `characterChips` to render elements, you're creating plain HTML `<div>` elements, not `CharacterChip` React components.
+
+To resolve the error:
+
+1. If `CharacterChip` is supposed to be a component, you need to define it. Below is an example of how you might define a simple `CharacterChip` component:
+
+```javascript
+const CharacterChip = ({ id, char, onDragStart }) => {
+  return (
+    <div
+      id={id}
+      className="character-chip"
+      draggable="true"
+      onDragStart={onDragStart}
+    >
+      {char}
+    </div>
+  );
+};
+```
+
+2. Then, use this component in your `.map` callback where you render the character chips:
+
+```javascript
+<div className="character-tray">
+  {characterChips.map((char, index) => (
+    <CharacterChip
+      key={index}
+      id={`character-chip-${index}`}
+      char={char}
+      onDragStart={handleDragStart}
+    />
+  ))}
+</div>
+```
+
+3. Make sure to place the definition of `CharacterChip` before the `App` component in your `App.js` file, or import it from another file if it's defined elsewhere.
+
+The `useEffect` you have will still handle attaching the touch event listeners after the components have been mounted to the DOM, so you should keep that in place. Just remember that React components need to be defined or imported before they can be used in JSX.
+
+---
+
+**User** _at 7:45 pm, Apr 5, 2024_
+
+Ok, I've added it before the `App()`, but I am wondering if I should start arranging these files more professionally. You keep mentioning JSX but I have no `.jsx` files. Should I be breaking some of this `App.js` code out into separate files?
+
+---
+
+**Codeium** _at 7:45 pm, Apr 5, 2024_
+
+Yes, it's a good practice to organize your React code into separate files, especially as your application grows. This helps with maintainability, readability, and reusability of your components. It's not strictly necessary for the files to have the `.jsx` extension; `.js` works just as well for React components, though some developers prefer `.jsx` for files that contain JSX to clearly indicate that they are not plain JavaScript files.
+
+Here are some guidelines for breaking up your `App.js`:
+
+1. **Component Files**: Create separate files for each component, especially if they are reusable or logically distinct. For example, you might have a `CharacterChip.js` file for the `CharacterChip` component.
+
+2. **Utility Functions**: If you have utility functions that are used by multiple components or that could be used by multiple components in the future, consider moving them to a separate file, like `utils.js`.
+
+3. **Custom Hooks**: If you're using custom hooks, they could also be moved to their own files, such as `useTouchHandlers.js`.
+
+4. **Styles**: If you have a lot of CSS, it might be beneficial to split it into separate CSS files that correspond to their components, for example, `CharacterChip.css`.
+
+Here's an example of how you might structure your project:
+
+```
+/src
+  /components
+    /CharacterChip
+      CharacterChip.js
+      CharacterChip.css
+  /utils
+    utils.js
+  /hooks
+    useTouchHandlers.js
+  App.js
+  App.css
+```
+
+Each component would then be in its own directory with its associated CSS file. To use a component, you'd import it in `App.js` or in whatever component is using it:
+
+```javascript
+import CharacterChip from './components/CharacterChip/CharacterChip';
+```
+
+This is just an example structure. The exact organization can vary based on your project's needs and your personal or team preferences. The key takeaway is that each piece of your application should be easy to find and should have a single responsibility, which is easier to achieve when the code is split into smaller, focused files and directories.
+
+---
+
+**User** _at 7:52 pm, Apr 5, 2024_
+
+I have this file:
+
+```ps1
+🕐[19:46:39]❯ cat src/components/CharacterChip/CharacterChip.js
+
+const CharacterChip = ({ id, char, onDragStart }) => {
+ return (
+  <div
+   id={id}
+   className="character-chip"
+   draggable="true"
+   onDragStart={onDragStart}
+  >
+   {char}
+  </div>
+ );
+};
+spell-and-speak on  master [!?] via  v18.18.0 on ☁️ (us-west-1) 
+🕐[19:51:24]❯
+```
+
+But I get this error:
+
+```
+Compiled with problems:
+×
+ERROR in ./src/App.js 200:65-78
+export 'default' (imported as 'CharacterChip') was not found in './components/CharacterChip/CharacterChip' (module has no exports)
+ERROR in ./src/App.js 220:73-86
+export 'default' (imported as 'CharacterChip') was not found in './components/CharacterChip/CharacterChip' (module has no exports)
+```
+
+---
+
+**Codeium** _at 7:53 pm, Apr 5, 2024_
+
+The error message you're seeing indicates that your `App.js` file is trying to import `CharacterChip` as a default export from `CharacterChip.js`, but `CharacterChip.js` does not have a default export.
+
+To fix this, you need to add an export statement to your `CharacterChip.js` file. Based on the code you provided, you should export `CharacterChip` as a default export. Here's how you can do it:
+
+```javascript
+const CharacterChip = ({ id, char, onDragStart }) => {
+  return (
+    <div
+      id={id}
+      className="character-chip"
+      draggable="true"
+      onDragStart={onDragStart}
+    >
+      {char}
+    </div>
+  );
+};
+
+export default CharacterChip;
+```
+
+After adding the `export default CharacterChip;` line, the `CharacterChip` component will be correctly exported from `CharacterChip.js`, and you should be able to import it into `App.js` without any issues:
+
+```javascript
+import CharacterChip from './components/CharacterChip/CharacterChip';
+```
+
+Make sure that the import path matches the location of your `CharacterChip.js` file relative to the `App.js` file, and that you have saved the changes to `CharacterChip.js` after adding the export statement. Once the export is correctly set up, the error should be resolved, and your application should compile successfully.
+
+---
+
+**User** _at 7:59 pm, Apr 5, 2024_
+
+That is working. The `CharacterChip.css` you suggested is not getting imported though.
+
+---
+
+**Codeium** _at 7:59 pm, Apr 5, 2024_
+
+To import the `CharacterChip.css` stylesheet into your `CharacterChip` component, you should use an import statement at the top of the `CharacterChip.js` file. Here's how you can do that:
+
+```javascript
+import React from 'react'; // Import React (if you're using React 17 or earlier)
+import './CharacterChip.css'; // Adjust the path if necessary
+
+const CharacterChip = ({ id, char, onDragStart }) => {
+  return (
+    <div
+      id={id}
+      className="character-chip"
+      draggable="true"
+      onDragStart={onDragStart}
+    >
+      {char}
+    </div>
+  );
+};
+
+export default CharacterChip;
+```
+
+This import statement tells your bundler (like Webpack, if you're using Create React App) to include the `CharacterChip.css` file in the build process. The styles defined in the CSS file will then be applied to your `CharacterChip` component.
+
+Make sure that:
+
+1. The path in the import statement is correct and relative to the location of the `CharacterChip.js` file.
+2. The `CharacterChip.css` file is located in the same directory as the `CharacterChip.js` file.
+
+If your project was bootstrapped with Create React App, importing CSS files like this should work out of the box. If you're using a different setup, make sure that your build process supports importing CSS into JavaScript files.
+
+After adding the import statement for the CSS file, save the changes and rerun your build process. The styles should now be applied to your `CharacterChip` components.
