@@ -4,6 +4,7 @@ on:
     branches:
       - master  # Trigger on changes to the master branch
       - main  # Trigger on changes to the main branch
+      
 
 jobs:
   build-and-deploy:
