@@ -1,38 +1,103 @@
 // App.js or your main component file
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useReducer } from 'react';
+import ReactDOM from 'react-dom';
 import './App.css';
 import wordList from './word-list.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
 import './components/CharacterChip/CharacterChip.css';
 
+// Define action types
+const ActionTypes = {
+  DROP_CHIP: 'DROP_CHIP',
+  SET_CHARACTER_CHIPS: 'SET_CHARACTER_CHIPS',
+  SET_INPUT_BOX_CHIPS: 'SET_INPUT_BOX_CHIPS',
+  SET_HAS_DROPPED: 'SET_HAS_DROPPED',
+  INIT_NEW_WORD: 'INIT_NEW_WORD',
+};
+
+// Define the reducer function
+const reducer = (state, action) => {
+  switch (action.type) {
+    case ActionTypes.DROP_CHIP: {
+      const { draggedChipId, targetInputBoxId } = action.payload;
+      const existingChipId = state.inputBoxChips[targetInputBoxId];
+
+      // Create new state for characterChips and inputBoxChips
+      const newCharacterChips = existingChipId
+        ? state.characterChips.concat(existingChipId)
+        : state.characterChips;
+      const newInputBoxChips = {
+        ...state.inputBoxChips,
+        [targetInputBoxId]: draggedChipId,
+      };
+
+      return {
+        ...state,
+        characterChips: newCharacterChips,
+        inputBoxChips: newInputBoxChips,
+        hasDropped: true,
+      };
+    }
+    case ActionTypes.SET_CHARACTER_CHIPS:
+      return {
+        ...state,
+        characterChips: action.payload,
+      };
+    case ActionTypes.SET_INPUT_BOX_CHIPS:
+      return {
+        ...state,
+        inputBoxChips: action.payload,
+      };
+    case ActionTypes.SET_HAS_DROPPED:
+      return {
+        ...state,
+        hasDropped: action.payload,
+      };
+    case ActionTypes.INIT_NEW_WORD: {
+      const { newWord, newInputBoxChips, shuffledCharacters } = action.payload;
+      return {
+        ...state,
+        currentWord: newWord,
+        inputBoxChips: newInputBoxChips,
+        characterChips: shuffledCharacters,
+      };
+    }
+    default:
+      return state;
+  }
+};
+
 function App() {
-  const [currentWord, setCurrentWord] = useState('');
-  const [characterChips, setCharacterChips] = useState([]);
-  const [inputBoxChips, setInputBoxChips] = useState({});
-
-
-  const handleDrop = (event, targetInputBoxId) => {
-    event.preventDefault();
-    const draggedChipId = event.dataTransfer.getData("text/plain");
-    processChipDrop(draggedChipId, targetInputBoxId);
+  // Define the initial state within the App or import from another file
+  const initialState = {
+    currentWord: '', // Assuming you want to manage this in the reducer as well
+    characterChips: [], // Initialize with your character chips data
+    inputBoxChips: {}, // Initialize with your input boxes data
+    hasDropped: false,
   };
+  
+  // Use useReducer hook to manage state
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  // Replace useState hooks with values from the state object
+  const { currentWord, characterChips, inputBoxChips, hasDropped } = state;
 
   // Say the characters in the input boxes
   const sayWord = useCallback(() => {
-    const inputBoxes = document.querySelectorAll('.input-box');
-    let wordToSay = '';
-
-    inputBoxes.forEach(box => {
-      // If the box has a child node (the character chip), use its text content
-      // Otherwise, use a space to represent an empty box
-      wordToSay += box.childNodes[0] ? box.childNodes[0].textContent : ' ';
-    });
+    // Construct the word from the inputBoxChips state
+    const wordToSay = Object.keys(state.inputBoxChips)
+      .sort() // Sort the keys to ensure the correct order
+      .map(boxId => {
+        const chipId = state.inputBoxChips[boxId];
+        return chipId ? chipId.replace('character-chip-', '') : ' '; // Assuming chipId is like 'character-chip-A'
+      })
+      .join('');
 
     // Use the SpeechSynthesis API to pronounce the word
     const utterance = new SpeechSynthesisUtterance(wordToSay);
     window.speechSynthesis.speak(utterance);
-  }, []);
+  }, [state.inputBoxChips]); // Include state.inputBoxChips in the dependency array
 
   const handleSayWord = useCallback(() => {
     if ('speechSynthesis' in window) {
@@ -45,13 +110,30 @@ function App() {
   }, [sayWord]);
 
   const handleDragStart = (e) => {
-    e.dataTransfer.setData('text/plain', e.target.id);
-    // Optionally, add a drag image and set an offset to position it under the pointer
-    const dragImage = e.target.cloneNode(true);
+    const { id } = e.currentTarget;
+    e.dataTransfer.setData('text/plain', id);
+
+    // Create a drag image
+    const dragImage = e.currentTarget.cloneNode(true);
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-99999px'; // Position the drag image off-screen
     document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, dragImage.width / 2, dragImage.height / 2);
+
+    // Use the off-screen element as the drag image
+    e.dataTransfer.setDragImage(
+      dragImage, 
+      dragImage.offsetWidth / 2, 
+      dragImage.offsetHeight / 2
+    );
     // Remove the temporary drag image after the drag starts
-    dragImage.addEventListener('dragstart', () => document.body.removeChild(dragImage));
+    e.currentTarget.addEventListener('dragstart', () => {
+      if(!document.body.hasChildNodes(dragImage)){return;}
+      try{
+        document.body.removeChild(dragImage);
+        ReactDOM.unmountComponentAtNode(dragImage);
+      }
+      catch(e){}
+    });
   };
 
   const handleDragOver = (e) => {
@@ -68,87 +150,81 @@ function App() {
     e.target.style.top = `${touchLocation.pageY - e.target.offsetHeight / 2}px`;
   };
 
-  const processChipDrop = (draggedChipId, targetInputBoxId) => {
-    setInputBoxChips(prevState => {
-      const newState = { ...prevState };
-
-      // Find if the dragged chip was already in an input box
-      const currentBoxId = Object.keys(newState).find(key => newState[key] === draggedChipId);
-      if (currentBoxId) {
-        newState[currentBoxId] = null; // Remove the chip from its current input box
-      }
-
-      // If there is an existing chip in the target input box, move it back to the tray
-      const existingChipId = newState[targetInputBoxId];
-      if (existingChipId) {
-        setCharacterChips(prevChips => [...prevChips, existingChipId]);
-      }
-
-      // Set the target input box to the dragged chip
-      newState[targetInputBoxId] = draggedChipId;
-
-      // Perform any additional actions, like saying the word
-      handleSayWord();
-
-      return newState;
+  const handleDrop = (event, targetInputBoxId) => {
+    event.preventDefault();
+    const draggedChipId = event.dataTransfer.getData("text/plain");
+    dispatch({
+      type: ActionTypes.DROP_CHIP,
+      payload: { draggedChipId, targetInputBoxId },
     });
   };
 
-const handleTouchEnd = useCallback((e) => {
-  const touchLocation = e.changedTouches[0];
-  const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
-  const draggedChipId = e.target.id;
+  const handleTouchEnd = useCallback((e) => {
+    const touchLocation = e.changedTouches[0];
+    const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
+    const draggedChipId = e.target.id;
 
-  const inputBoxes = document.querySelectorAll('.input-box');
-  const targetBox = Array.from(inputBoxes).find(box => {
-    const boxRect = box.getBoundingClientRect();
-    return (
-      touchPoint.x >= boxRect.left &&
-      touchPoint.x <= boxRect.right &&
-      touchPoint.y >= boxRect.top &&
-      touchPoint.y <= boxRect.bottom
-    );
-  });
+    const targetBoxId
+      = Object
+        .keys(inputBoxChips)
+        .find(id => {
+          // Referring to the input box element using the id
+          const inputBox = document.getElementById(id);
+          const boxRect = inputBox.getBoundingClientRect();
+          const touchLocation = e.changedTouches[0];
+          const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
+          return (
+            touchPoint.x >= boxRect.left &&
+            touchPoint.x <= boxRect.right &&
+            touchPoint.y >= boxRect.top &&
+            touchPoint.y <= boxRect.bottom
+          );
+        });
 
-  if (targetBox) {
-    processChipDrop(draggedChipId, targetBox.id);
-  } else {
-    // Logic for unsuccessful drop (e.g., move back to original position)
-  }
-
-  // Reset styles or any state as needed
-  e.target.classList.remove('dragging');
-  e.target.style.position = '';
-  e.target.style.left = '';
-  e.target.style.top = '';
-}, [handleSayWord, processChipDrop]);
-
-  useEffect(() => {
-    // Pick a new word from the list
-    const newWord = wordList[Math.floor(Math.random() * wordList.length)];
-    setCurrentWord(newWord);
-
-    // Create initial state for inputBoxChips based on the length of the new word
-    const newInputBoxChips = {};
-    for (let i = 0; i < newWord.length; i++) {
-      newInputBoxChips[`input-box-${i}`] = null; // Initially, no input boxes have chips
+    // If we found a target box, process the chip drop
+    if (targetBoxId) {
+      // processChipDrop(draggedChipId, targetBoxId);
+      dispatch({
+        type: ActionTypes.DROP_CHIP,
+        payload: { draggedChipId, targetBoxId },
+      });
+    } else {
+      // Logic for unsuccessful drop (e.g., move back to original position)
     }
 
-    // Create character chips for the new word
+    // Reset styles or any state as needed
+    e.target.classList.remove('dragging');
+    e.target.removeAttribute('style');
+    e.target.style.position = '';
+    e.target.style.left = '';
+    e.target.style.top = '';
+  }, [handleSayWord, sayWord]);
+
+  useEffect(() => {
+    const newWord = wordList[Math.floor(Math.random() * wordList.length)];
+    const newInputBoxChips = {};
+    for (let i = 0; i < newWord.length; i++) {
+      newInputBoxChips[`input-box-${i}`] = null;
+    }
+
     const characters = newWord.split('');
-    // Add 50% extra random characters
     const extraChars = Math.ceil(characters.length * 0.5);
     for (let i = 0; i < extraChars; i++) {
       const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26));
       characters.push(randomChar);
     }
 
-    // Shuffle the array of characters
     const shuffledCharacters = characters.sort(() => 0.5 - Math.random());
 
-    setInputBoxChips(newInputBoxChips);
-    setCharacterChips(shuffledCharacters);
-  }, []);
+    dispatch({
+      type: ActionTypes.INIT_NEW_WORD,
+      payload: {
+        newWord,
+        newInputBoxChips,
+        shuffledCharacters,
+      },
+    });
+  }, [dispatch]);
 
   useEffect(() => {
     // Attach touch event listeners
@@ -168,7 +244,28 @@ const handleTouchEnd = useCallback((e) => {
       });
     };
   }, [characterChips, handleTouchEnd]); // Dependency array includes characterChips to re-run the effect when it changes
+  
+  // Use an effect to call your callback after the state has been updated
+  useEffect(() => {
+    if (hasDropped) {
+      // Call your callback function
+      handleSayWord();
 
+      // Reset the drop indicator
+      dispatch({ type: ActionTypes.SET_HAS_DROPPED, payload: false })
+    }
+  }, [hasDropped, handleSayWord, dispatch]); // Make sure to list all dependencies here
+  
+  useEffect(() => {
+    // Perform any necessary cleanup
+    return () => {
+      // Remove any cloned elements that might have been appended to the body
+      const dragImages = document.querySelectorAll('.drag-image'); // Use a specific class or identifier for your drag images
+      dragImages.forEach(img => img.remove());
+    };
+  }, []); // Empty dependency array ensures this runs on mount and unmount only
+
+  console.log(state);
   return (
     <div className="app">
       <header className="header">
@@ -178,34 +275,30 @@ const handleTouchEnd = useCallback((e) => {
       <div className="word-display">
         {currentWord}
       </div>
-      <div 
-       className="input-boxes">
-        {currentWord.split('').map((_, index) => {
-            const boxId = `input-box-${index}`;
-            return (
+      <div
+        className="input-boxes">
+          {Object.keys(inputBoxChips).map((inputBoxId) => {
+            const chipId = inputBoxChips[inputBoxId];
+            const chip = chipId ? characterChips.find(c => c.id === chipId) : null;
 
-            <div
-              key={boxId}
-              id={boxId}
-              onDragOver={handleDragOver}
-              onDrop={(event) => handleDrop(event, boxId)}
-              className="input-box"
-              >
-                {inputBoxChips[boxId] && (
-                  <CharacterChip
-                    id={inputBoxChips[boxId]}
-                    // other props
-                  />
-                )}
-            </div>
-          );
-        })}
+            return (
+              <div 
+                key={inputBoxId} 
+                id={inputBoxId} 
+                className="input-box"
+                onDrop={handleDrop} 
+                onDragOver={handleDragOver}>
+                {chip ? <CharacterChip {...chip} /> : null}
+              </div>
+            );
+          })}
       </div>
       <div className="character-tray">
         {characterChips.map((char, index) => (
           <CharacterChip
             key={index}
             id={`character-chip-${index}`}
+            data-testid={`character-chip-${index}`}
             char={char}
             onDragStart={handleDragStart}
           />

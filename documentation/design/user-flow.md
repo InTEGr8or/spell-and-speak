@@ -36,3 +36,19 @@ graph TD
     L -->|Yes| B
     L -->|No| M(End)
 ```
+## Focus on Drag-and-Drop
+
+```mermaid
+graph TD;
+    A[Start Dragging Chip] -->|User starts drag| B(Drag Chip);
+    B --> C{Is Over Input Box?};
+    C -->|Yes| D[Drop Chip];
+    C -->|No| E[Cancel Drag];
+    D --> F{Does Input Box Have Existing Chip?};
+    F -->|Yes| G[Return Existing Chip to Tray];
+    F -->|No| H[Place Dragged Chip in Input Box];
+    G --> H;
+    E --> I[Leave Chip in Original Location];
+    H --> J[Update State with New Positions];
+    I --> J;
+```

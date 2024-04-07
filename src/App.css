@@ -26,7 +26,8 @@
   gap: 10px;
   margin-bottom: 20px;
   flex-wrap: wrap; /* Allow input boxes to wrap on smaller screens */
-  max-width: 100%;
+  max-width: 90%;
+  margin: 0 auto;
 }
 
 .input-box {
@@ -43,6 +44,7 @@
 }
 
 .character-tray {
+  margin-top: 80px;
   display: flex;
   justify-content: center;
   gap: 10px;
