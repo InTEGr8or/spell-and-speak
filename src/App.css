@@ -58,3 +58,16 @@
     /* justify-content: flex-start; Align to the start on small screens */
   }
 }
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.fade-out {
+  animation: fadeOut 4s forwards;
+}

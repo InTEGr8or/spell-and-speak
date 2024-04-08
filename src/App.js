@@ -11,11 +11,17 @@ const ActionTypes = {
   SET_INPUT_BOX_CHIPS: 'SET_INPUT_BOX_CHIPS',
   SET_HAS_DROPPED: 'SET_HAS_DROPPED',
   INIT_NEW_WORD: 'INIT_NEW_WORD',
+  SET_FADE_OUT: 'SET_FADE_OUT',
 };
 
 // Define the reducer function
 const reducer = (state, action) => {
   switch (action.type) {
+    case ActionTypes.SET_FADE_OUT:
+      return {
+        ...state,
+        fadeOut: action.payload,
+      };
     case ActionTypes.DROP_CHIP: {
       const { draggedChipId, targetInputBoxId} = action.payload;
       const existingChipId = state.inputBoxChips[targetInputBoxId];
@@ -65,6 +71,7 @@ const reducer = (state, action) => {
         currentWord: newWord,
         inputBoxChips: newInputBoxChips,
         characterChips: shuffledCharacters,
+        fadeOut: false,
       };
     }
     default:
@@ -79,6 +86,7 @@ function App() {
     characterChips: [], // Initialize with your character chips data
     inputBoxChips: {}, // Initialize with your input boxes data
     hasDropped: false,
+    fadeOut: false,
   };
   
   // Use useReducer hook to manage state
@@ -88,26 +96,30 @@ function App() {
   const { currentWord, characterChips, inputBoxChips, hasDropped } = state;
 
   // Say the characters in the input boxes
-  const sayWord = useCallback(() => {
-    // Construct the word from the inputBoxChips state
-    const wordToSay = Object.keys(state.inputBoxChips)
-      .sort() // Sort the keys to ensure the correct order
-      .map(boxId => {
-        const chipId = (state.inputBoxChips[boxId] ?? ' ').replace('character-chip-', '');
-        return chipId[0]; // Assuming chipId is like 'character-chip-A'
-      })
-      .join('')
-      .replace(/\s{2,}/g, ' ');
+  const sayWord = useCallback((word) => {
+    if (!word) {
+      // Fallback to constructing the word from the inputBoxChips state if no word is provided
+      word = Object.keys(state.inputBoxChips)
+        .sort() // Sort the keys to ensure the correct order
+        .map(boxId => {
+          const chipId = (state.inputBoxChips[boxId] ?? ' ').replace('character-chip-', '');
+          return chipId[0]; // Assuming chipId is like 'character-chip-A'
+        })
+        .join('')
+        .replace(/\s{2,}/g, ' ');
+    }
 
     // Use the SpeechSynthesis API to pronounce the word
-    const utterance = new SpeechSynthesisUtterance(wordToSay);
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.rate = 0.6;
     window.speechSynthesis.speak(utterance);
   }, [state.inputBoxChips]); // Include state.inputBoxChips in the dependency array
 
-  const handleSayWord = useCallback(() => {
+  // Update the handleSayWord function to accept a word parameter
+  const handleSayWord = useCallback((word) => {
     if ('speechSynthesis' in window) {
       // Browser supports speech synthesis
-      sayWord();
+      sayWord(word);
     } else {
       // Handle the error, possibly by informing the user
       console.error('Speech synthesis not supported in this browser.');
@@ -287,13 +299,31 @@ function App() {
     };
   }, []); // Empty dependency array ensures this runs on mount and unmount only
 
+  // Call this function to start the fade-out effect
+  const startFadeOut = useCallback(() => {
+    dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });
+
+  }, [dispatch]);
+
+  useEffect(() => {
+    // If the currentWord changes and is not empty, start the fade-out effect
+    if (currentWord) {
+      startFadeOut();
+    }
+  }, [currentWord, startFadeOut]);
+
+  // ... rest of your component ...
+
+  // Determine the class to apply based on the state.fadeOut property
+  const wordDisplayClass = state.fadeOut ? 'fade-out' : '';
+
   return (
     <div className="app">
-      <header className="header">
+      <header className="header" onClick={() => handleSayWord(currentWord)}>
         SPELL-AND-SPEAK
       </header>
-      <span className="audio-icon">🔊</span>
-      <div className="word-display">
+      <span className="audio-icon" onClick={() => handleSayWord(currentWord)}>🔊</span>
+      <div className={`word-display ${wordDisplayClass}`} onClick={() => handleSayWord(currentWord)}>
         {currentWord}
       </div>
       <div
