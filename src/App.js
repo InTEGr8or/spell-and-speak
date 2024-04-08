@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useState, useReducer } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useCallback, useEffect, useReducer } from 'react';
 import './App.css';
 import wordList from './word-list.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
@@ -18,7 +17,7 @@ const ActionTypes = {
 const reducer = (state, action) => {
   switch (action.type) {
     case ActionTypes.DROP_CHIP: {
-      const { draggedChipId, targetInputBoxId } = action.payload;
+      const { draggedChipId, targetInputBoxId} = action.payload;
       const existingChipId = state.inputBoxChips[targetInputBoxId];
 
       // Remove the dragged chip object from characterChips
@@ -145,6 +144,7 @@ function App() {
   };
 
   const handleTouchMove = (e) => {
+    e.preventDefault();
     e.target.classList.add('dragging');
     // Get the touch coordinates
     const touchLocation = e.targetTouches[0];
@@ -160,7 +160,6 @@ function App() {
 
     // Make sure that targetInputBoxId is defined
     if (typeof targetInputBoxId === 'undefined') {
-      console.error('targetInputBoxId is undefined');
       return; // Exit early if targetInputBoxId is not valid
     }
     dispatch({
@@ -170,17 +169,17 @@ function App() {
   };
 
   const handleTouchEnd = useCallback((e) => {
+    e.preventDefault(); // Prevent the default touch behavior
+    const touchLocation = e.changedTouches[0];
+    const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
     const draggedChipId = e.target.id;
 
-    const targetBoxId
+    const targetInputBoxId
       = Object
         .keys(inputBoxChips)
         .find(id => {
-          // Referring to the input box element using the id
           const inputBox = document.getElementById(id);
           const boxRect = inputBox.getBoundingClientRect();
-          const touchLocation = e.changedTouches[0];
-          const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
           return (
             touchPoint.x >= boxRect.left &&
             touchPoint.x <= boxRect.right &&
@@ -189,14 +188,13 @@ function App() {
           );
         });
 
-    // If we found a target box, process the chip drop
-    if (targetBoxId) {
-      const chipChar = draggedChipId.substring(15, 16);  // Parse the character from the chip ID
-      // You can now use chipChar if needed for further logic
 
+    // If we found a target box, process the chip drop
+    if (targetInputBoxId) {
+      // You can now use chipChar if needed for further logic
       dispatch({
         type: ActionTypes.DROP_CHIP,
-        payload: { draggedChipId, targetBoxId, chipChar }, // Include chipChar in the payload if necessary
+        payload: { draggedChipId, targetInputBoxId }, // Include chipChar in the payload if necessary
       });
     } else {
       // Logic for unsuccessful drop (e.g., move back to original position)
@@ -208,7 +206,7 @@ function App() {
     e.target.style.position = '';
     e.target.style.left = '';
     e.target.style.top = '';
-  }, []);
+  }, [inputBoxChips]);
 
   useEffect(() => {
     const newWord = wordList[Math.floor(Math.random() * wordList.length)];
@@ -248,7 +246,7 @@ function App() {
         shuffledCharacters,
       },
     });
-  }, [dispatch, wordList]);
+  }, [dispatch]);
 
   useEffect(() => {
     // Attach touch event listeners
