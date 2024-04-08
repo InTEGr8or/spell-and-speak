@@ -320,7 +320,6 @@ function App() {
 
   return (
     <div className="app">
-      <div hidden="hidden">638481745326220221</div>
       <header className="header" onClick={() => handleSayWord(currentWord)}>
         SPELL-AND-SPEAK
       </header>
