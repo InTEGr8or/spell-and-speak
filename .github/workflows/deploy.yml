@@ -15,7 +15,7 @@ jobs:
     - name: Install Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: '18'  # Use the node version that matches your development environment
+        node-version: '20'  # Use the node version that matches your development environment
 
     - name: Install Dependencies
       run: npm install
