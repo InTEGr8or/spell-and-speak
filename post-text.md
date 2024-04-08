@@ -1,63 +1,14 @@
-I had been using this:
+Before I drag a chip I have this:
 
-```js
-// Use an effect to call your callback after the state has been updated
-useEffect(() => {
-  if (hasDropped) {
-    // Call your callback function
-    handleSayWord();
-
-    // Reset the drop indicator
-    dispatch({ type: ActionTypes.SET_HAS_DROPPED, payload: true })
-  }
-}, [hasDropped, handleSayWord, dispatch]); // Make sure to list all dependencies here
+```
+CharacterChips at find time: [{"id":"character-chip-L-0","char":"L"},{"id":"character-chip-I-1","char":"I"},{"id":"character-chip-R-4","char":"R"},{"id":"character-chip-N-3","char":"N"},{"id":"character-chip-O-2","char":"O"},{"id":"character-chip-C-5","char":"C"}]
 ```
 
-I am not sure if that is still needed, or how I should call `handleSayWord()` in the `reducer()` way of state management and `ActionTypes`
+After I drag a chip I have this: 
 
-These are both in `reducer()`:
-
-```js
-    case ActionTypes.DROP_CHIP: {
-      const { draggedChipId, targetInputBoxId } = action.payload;
-      const existingChipId = state.inputBoxChips[targetInputBoxId];
-
-      // Create new state for characterChips and inputBoxChips
-      const newCharacterChips = existingChipId
-        ? state.characterChips.concat(existingChipId)
-        : state.characterChips;
-      const newInputBoxChips = {
-        ...state.inputBoxChips,
-        [targetInputBoxId]: draggedChipId,
-      };
-
-      return {
-        ...state,
-        characterChips: newCharacterChips,
-        inputBoxChips: newInputBoxChips,
-        hasDropped: true,
-      };
-    }
 ```
-and
-
-```js
-    case ActionTypes.SET_HAS_DROPPED:
-      return {
-        ...state,
-        hasDropped: action.payload,
-      };
-```
-
-and I have this:
-
-```js
-  const handleDrop = (event, targetInputBoxId) => {
-    event.preventDefault();
-    const draggedChipId = event.dataTransfer.getData("text/plain");
-    dispatch({
-      type: ActionTypes.DROP_CHIP,
-      payload: { draggedChipId, targetInputBoxId },
-    });
-  };
+CharacterChips: [{"id":"character-chip-I-1","char":"I"},{"id":"character-chip-R-4","char":"R"},{"id":"character-chip-N-3","char":"N"},{"id":"character-chip-O-2","char":"O"},{"id":"character-chip-C-5","char":"C"}]
+App.js:306 Chip ID at find time:  character-chip-L-0
+App.js:307 CharacterChips at find time: [{"id":"character-chip-I-1","char":"I"},{"id":"character-chip-R-4","char":"R"},{"id":"character-chip-N-3","char":"N"},{"id":"character-chip-O-2","char":"O"},{"id":"character-chip-C-5","char":"C"}]
+App.js:309 Found Chip:  undefined
 ```

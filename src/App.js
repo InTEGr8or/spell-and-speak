@@ -1,5 +1,3 @@
-// App.js or your main component file
-
 import React, { useCallback, useEffect, useState, useReducer } from 'react';
 import ReactDOM from 'react-dom';
 import './App.css';
@@ -23,10 +21,17 @@ const reducer = (state, action) => {
       const { draggedChipId, targetInputBoxId } = action.payload;
       const existingChipId = state.inputBoxChips[targetInputBoxId];
 
-      // Create new state for characterChips and inputBoxChips
-      const newCharacterChips = existingChipId
-        ? state.characterChips.concat(existingChipId)
-        : state.characterChips;
+      // Remove the dragged chip object from characterChips
+      const newCharacterChips = state.characterChips.filter(chip => chip.id !== draggedChipId);
+
+      // If there is an existing chip in the target input box, add it back to characterChips
+      if(existingChipId) {
+        const existingChip = state.characterChips.find(chip => chip.id === existingChipId);
+        if(existingChip) {
+          newCharacterChips.push(existingChip);
+        }
+      }
+
       const newInputBoxChips = {
         ...state.inputBoxChips,
         [targetInputBoxId]: draggedChipId,
@@ -89,10 +94,11 @@ function App() {
     const wordToSay = Object.keys(state.inputBoxChips)
       .sort() // Sort the keys to ensure the correct order
       .map(boxId => {
-        const chipId = state.inputBoxChips[boxId];
-        return chipId ? chipId.replace('character-chip-', '') : ' '; // Assuming chipId is like 'character-chip-A'
+        const chipId = (state.inputBoxChips[boxId] ?? ' ').replace('character-chip-', '');
+        return chipId[0]; // Assuming chipId is like 'character-chip-A'
       })
-      .join('');
+      .join('')
+      .replace(/\s{2,}/g, ' ');
 
     // Use the SpeechSynthesis API to pronounce the word
     const utterance = new SpeechSynthesisUtterance(wordToSay);
@@ -125,15 +131,13 @@ function App() {
       dragImage.offsetWidth / 2, 
       dragImage.offsetHeight / 2
     );
-    // Remove the temporary drag image after the drag starts
-    e.currentTarget.addEventListener('dragstart', () => {
-      if(!document.body.hasChildNodes(dragImage)){return;}
-      try{
+
+    // Remove the drag image from the DOM after the drag operation starts
+    setTimeout(() => {
+      if(document.body.contains(dragImage)){
         document.body.removeChild(dragImage);
-        ReactDOM.unmountComponentAtNode(dragImage);
       }
-      catch(e){}
-    });
+    }, 0); // Use setTimeout to defer the removal until after the drag image is used
   };
 
   const handleDragOver = (e) => {
@@ -153,6 +157,12 @@ function App() {
   const handleDrop = (event, targetInputBoxId) => {
     event.preventDefault();
     const draggedChipId = event.dataTransfer.getData("text/plain");
+
+    // Make sure that targetInputBoxId is defined
+    if (typeof targetInputBoxId === 'undefined') {
+      console.error('targetInputBoxId is undefined');
+      return; // Exit early if targetInputBoxId is not valid
+    }
     dispatch({
       type: ActionTypes.DROP_CHIP,
       payload: { draggedChipId, targetInputBoxId },
@@ -160,8 +170,6 @@ function App() {
   };
 
   const handleTouchEnd = useCallback((e) => {
-    const touchLocation = e.changedTouches[0];
-    const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
     const draggedChipId = e.target.id;
 
     const targetBoxId
@@ -183,10 +191,12 @@ function App() {
 
     // If we found a target box, process the chip drop
     if (targetBoxId) {
-      // processChipDrop(draggedChipId, targetBoxId);
+      const chipChar = draggedChipId.substring(15, 16);  // Parse the character from the chip ID
+      // You can now use chipChar if needed for further logic
+
       dispatch({
         type: ActionTypes.DROP_CHIP,
-        payload: { draggedChipId, targetBoxId },
+        payload: { draggedChipId, targetBoxId, chipChar }, // Include chipChar in the payload if necessary
       });
     } else {
       // Logic for unsuccessful drop (e.g., move back to original position)
@@ -198,7 +208,7 @@ function App() {
     e.target.style.position = '';
     e.target.style.left = '';
     e.target.style.top = '';
-  }, [handleSayWord, sayWord]);
+  }, []);
 
   useEffect(() => {
     const newWord = wordList[Math.floor(Math.random() * wordList.length)];
@@ -207,15 +217,29 @@ function App() {
       newInputBoxChips[`input-box-${i}`] = null;
     }
 
-    const characters = newWord.split('');
-    const extraChars = Math.ceil(characters.length * 0.5);
-    for (let i = 0; i < extraChars; i++) {
-      const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-      characters.push(randomChar);
-    }
+    // Split the new word into characters and create chips for them
+    const wordCharacters = newWord.split('').map((char, index) => ({
+      id: `character-chip-${char}-${index}`,
+      char: char
+    }));
 
+    // Create extra random characters and add them to the array
+    const extraChars = Math.ceil(newWord.length * 0.5);
+    const randomCharacters = Array.from({ length: extraChars }, (_, i) => {
+      const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      return {
+        id: `character-chip-${randomChar}-${newWord.length + i}`,
+        char: randomChar
+      };
+    });
+
+    // Combine the word characters with the extra random characters
+    const characters = [...wordCharacters, ...randomCharacters];
+
+    // Shuffle the combined characters array
     const shuffledCharacters = characters.sort(() => 0.5 - Math.random());
 
+    // Dispatch the INIT_NEW_WORD action with the new structure
     dispatch({
       type: ActionTypes.INIT_NEW_WORD,
       payload: {
@@ -224,7 +248,7 @@ function App() {
         shuffledCharacters,
       },
     });
-  }, [dispatch]);
+  }, [dispatch, wordList]);
 
   useEffect(() => {
     // Attach touch event listeners
@@ -265,7 +289,6 @@ function App() {
     };
   }, []); // Empty dependency array ensures this runs on mount and unmount only
 
-  console.log(state);
   return (
     <div className="app">
       <header className="header">
@@ -277,29 +300,29 @@ function App() {
       </div>
       <div
         className="input-boxes">
-          {Object.keys(inputBoxChips).map((inputBoxId) => {
-            const chipId = inputBoxChips[inputBoxId];
-            const chip = chipId ? characterChips.find(c => c.id === chipId) : null;
+        {Object.keys(inputBoxChips).map((inputBoxId) => {
+          const chipId = inputBoxChips[inputBoxId];
+          const chip = chipId ? {id: chipId, char: chipId.substring(15,16)} : null;
 
-            return (
-              <div 
-                key={inputBoxId} 
-                id={inputBoxId} 
-                className="input-box"
-                onDrop={handleDrop} 
-                onDragOver={handleDragOver}>
-                {chip ? <CharacterChip {...chip} /> : null}
-              </div>
-            );
-          })}
+          return (
+            <div 
+              key={inputBoxId} 
+              id={inputBoxId} 
+              className="input-box"
+              onDrop={(event) => handleDrop(event, inputBoxId)} // Pass the inputBoxId to handleDrop
+              onDragOver={handleDragOver}>
+              {chip ? <CharacterChip {...chip} /> : null}
+            </div>
+          );
+        })}
       </div>
       <div className="character-tray">
-        {characterChips.map((char, index) => (
+        {characterChips.map((chip, index) => (
           <CharacterChip
-            key={index}
-            id={`character-chip-${index}`}
-            data-testid={`character-chip-${index}`}
-            char={char}
+            key={chip.id}
+            id={chip.id}
+            data-testid={chip.id}
+            char={chip.char} // Make sure to render `chip.char`, not the whole `chip` object
             onDragStart={handleDragStart}
           />
         ))}

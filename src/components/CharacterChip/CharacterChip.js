@@ -1,14 +1,14 @@
 
-const CharacterChip = ({ id, char, onDragStart }) => {
+const CharacterChip = (props) => {
   return (
     <div
-      id={id}
-      data-testid={id}
+      id={props.id}
+      data-testid={props.id}
       className="character-chip"
       draggable="true"
-      onDragStart={onDragStart}
+      onDragStart={props.onDragStart}
     >
-      {char}
+      {props.char}
     </div>
   );
 };
