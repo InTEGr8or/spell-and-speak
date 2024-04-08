@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/spell-and-speak/static/css/main.0565173d.css",
+    "main.js": "/spell-and-speak/static/js/main.b029955b.js",
+    "static/js/453.4880901c.chunk.js": "/spell-and-speak/static/js/453.4880901c.chunk.js",
+    "index.html": "/spell-and-speak/index.html",
+    "main.0565173d.css.map": "/spell-and-speak/static/css/main.0565173d.css.map",
+    "main.b029955b.js.map": "/spell-and-speak/static/js/main.b029955b.js.map",
+    "453.4880901c.chunk.js.map": "/spell-and-speak/static/js/453.4880901c.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.0565173d.css",
+    "static/js/main.b029955b.js"
+  ]
+}
