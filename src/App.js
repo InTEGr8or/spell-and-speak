@@ -308,9 +308,10 @@ function App() {
   useEffect(() => {
     // If the currentWord changes and is not empty, start the fade-out effect
     if (currentWord) {
+      sayWord(currentWord);
       startFadeOut();
     }
-  }, [currentWord, startFadeOut]);
+  }, [currentWord, startFadeOut, sayWord]);
 
   // ... rest of your component ...
 
