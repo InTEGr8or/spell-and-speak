@@ -9,6 +9,15 @@
       "webRoot": "${workspaceFolder}"
     },
     {
+      "name": "Attach to Edge",
+      "type": "msedge",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/src",
+      "sourceMaps": true,
+      "urlFilter": "http://localhost:3000/*"
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Jest All",

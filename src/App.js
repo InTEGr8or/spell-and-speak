@@ -82,7 +82,6 @@ const reducer = (state, action) => {
 function App() {
   // Define the initial state within the App or import from another file
   const initialState = {
-    currentWord: '', // Assuming you want to manage this in the reducer as well
     characterChips: [], // Initialize with your character chips data
     inputBoxChips: {}, // Initialize with your input boxes data
     hasDropped: false,
@@ -112,11 +111,13 @@ function App() {
     // Use the SpeechSynthesis API to pronounce the word
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = 0.6;
+    console.log('Utterance.text:', utterance.text);
     window.speechSynthesis.speak(utterance);
   }, [state.inputBoxChips]); // Include state.inputBoxChips in the dependency array
 
   // Update the handleSayWord function to accept a word parameter
   const handleSayWord = useCallback((word) => {
+    console.log('handleSayWord called with word:', word);
     if ('speechSynthesis' in window) {
       // Browser supports speech synthesis
       sayWord(word);
@@ -125,6 +126,19 @@ function App() {
       console.error('Speech synthesis not supported in this browser.');
     }
   }, [sayWord]);
+
+  // This function is called only when the currentWord changes.
+  const pronounceCurrentWord = useCallback(() => {
+    if (currentWord) {
+      handleSayWord(currentWord);
+    }
+  }, [currentWord, handleSayWord]);
+
+  // This function is called when a chip is dropped into an input-box.
+  const pronounceInputBoxes = useCallback(() => {
+    // Assuming handleSayWord can handle undefined to construct the word from input boxes
+    handleSayWord();
+  }, [handleSayWord]);
 
   const handleDragStart = (e) => {
     const { id } = e.currentTarget;
@@ -281,14 +295,15 @@ function App() {
   
   // Use an effect to call your callback after the state has been updated
   useEffect(() => {
+    console.log('Current word is now:', currentWord);
     if (hasDropped) {
       // Call your callback function
-      handleSayWord();
+      pronounceInputBoxes();
 
       // Reset the drop indicator
       dispatch({ type: ActionTypes.SET_HAS_DROPPED, payload: false })
     }
-  }, [hasDropped, handleSayWord, dispatch]); // Make sure to list all dependencies here
+  }, [hasDropped, dispatch]); // Make sure to list all dependencies here
   
   useEffect(() => {
     // Perform any necessary cleanup
@@ -306,26 +321,24 @@ function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    // If the currentWord changes and is not empty, start the fade-out effect
-    if (currentWord) {
-      sayWord(currentWord);
-      startFadeOut();
-    }
-  }, [currentWord, startFadeOut, sayWord]);
-
-  // ... rest of your component ...
+    pronounceCurrentWord();
+    // Start fade-out effect or any other related logic for new word initialization here.
+    startFadeOut();
+  }, [currentWord]);
 
   // Determine the class to apply based on the state.fadeOut property
   const wordDisplayClass = state.fadeOut ? 'fade-out' : '';
 
   return (
     <div className="app">
-      <header className="header" onClick={() => handleSayWord(currentWord)}>
-        SPELL-AND-SPEAK
-      </header>
-      <span className="audio-icon" onClick={() => handleSayWord(currentWord)}>🔊</span>
-      <div className={`word-display ${wordDisplayClass}`} onClick={() => handleSayWord(currentWord)}>
-        {currentWord}
+      <div onClick={() => pronounceCurrentWord(currentWord)}>
+        <header className="header" >
+          SPELL-AND-SPEAK
+        </header>
+        <span className="audio-icon" >🔊</span>
+        <div className={`word-display ${wordDisplayClass}`}>
+          {currentWord}
+        </div>
       </div>
       <div
         className="input-boxes">
