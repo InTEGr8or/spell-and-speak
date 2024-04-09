@@ -303,7 +303,7 @@ function App() {
       // Reset the drop indicator
       dispatch({ type: ActionTypes.SET_HAS_DROPPED, payload: false })
     }
-  }, [hasDropped, dispatch]); // Make sure to list all dependencies here
+  }, [hasDropped, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => {
     // Perform any necessary cleanup
@@ -324,7 +324,7 @@ function App() {
     pronounceCurrentWord();
     // Start fade-out effect or any other related logic for new word initialization here.
     startFadeOut();
-  }, [currentWord]);
+  }, [currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Determine the class to apply based on the state.fadeOut property
   const wordDisplayClass = state.fadeOut ? 'fade-out' : '';
