@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useReducer } from 'react';
 import './App.css';
-import wordList from './word-list.json';
+import wordList from './resources/animals.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
 import './components/CharacterChip/CharacterChip.css';
 
@@ -235,8 +235,12 @@ function App() {
   }, [inputBoxChips]);
 
   useEffect(() => {
-    const newWord = wordList[Math.floor(Math.random() * wordList.length)];
+    // Select a random word from the word list
+    const randomIndex = Math.floor(Math.random() * wordList.length);
+    const newWordObject = wordList[randomIndex];
+    const newWord = newWordObject.word;
     const newInputBoxChips = {};
+
     for (let i = 0; i < newWord.length; i++) {
       newInputBoxChips[`input-box-${i}`] = null;
     }
@@ -335,10 +339,15 @@ function App() {
         <header className="header" >
           SPELL-AND-SPEAK
         </header>
-        <span className="audio-icon" >🔊</span>
-        <div className={`word-display ${wordDisplayClass}`}>
-          {currentWord}
-        </div>
+        {/* Display the current word and its image (if applicable) */}
+        {currentWord && (
+          <>
+          <img class="word-image" src={`/assets/images/${currentWord}.webp`}  alt={currentWord} />
+          <div className={`word-display ${wordDisplayClass}`}>
+            <div>{currentWord}</div>
+          </div>
+          </>
+        )}
       </div>
       <div
         className="input-boxes">
@@ -359,7 +368,7 @@ function App() {
         })}
       </div>
       <div className="character-tray">
-        {characterChips.map((chip, index) => (
+        {characterChips.map((chip) => (
           <CharacterChip
             key={chip.id}
             id={chip.id}

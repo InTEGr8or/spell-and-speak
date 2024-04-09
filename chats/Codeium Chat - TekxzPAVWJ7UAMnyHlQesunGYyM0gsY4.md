@@ -540,3 +540,507 @@ and
 The current word: The current word is `REQUEST`. The current word is `REQUEST`. The current word is `REQUEST`-based. The current word is `REQUEST`. The current word is `REQUEST`. The current word
 
 The current word is `REQUEST`. The current word is `REQUEST`. The current word is `REQUEST`. The current word is `REQUEST`. The current word is `REQUEST`. The current word is `REQUEST`. The current word is `REQUEST`. The current word is `REQUEST`. The current word is `REQUEST`. The current word is `REQUEST`. The current word is `
+
+---
+
+**User** _at 9:58 pm, Apr 8, 2024_
+
+You can see here that that `sayWord` receives an `undefined` and then it pronounces the `input-boxes`, then it pronounces the the `currentWord` even though the `currentWord` is unchanged:
+
+```js
+handleSayWord called with word: undefined
+App.js:114 Utterance.text: O 
+App.js:120 handleSayWord called with word: OCTOPUS
+App.js:114 Utterance.text: OCTOPUS
+App.js:285 Current word is now: OCTOPUS
+App.js:285 Current word is now: OCTOPUS
+App.js:120 handleSayWord called with word: undefined
+App.js:114 Utterance.text: OC 
+App.js:120 handleSayWord called with word: OCTOPUS
+App.js:114 Utterance.text: OCTOPUS
+App.js:285 Current word is now: OCTOPUS
+```
+
+---
+
+**Codeium** _at 9:59 pm, Apr 8, 2024_
+
+The log output you provided suggests that `handleSayWord` is indeed being called twice: first with `undefined`, which triggers the pronunciation of the `input-boxes` string, and then with `OCTOPUS`, which triggers the pronunciation of the `currentWord`. This happens despite the fact that `currentWord` hasn't changed, as indicated by the repeated log "Current word is now: OCTOPUS".
+
+Given this behavior, it's possible that the `useEffect` hook triggering the pronunciation of `currentWord` might be the culprit, as it's not dependent on a change of `currentWord` but rather its existence:
+
+```javascript
+useEffect(() => {
+  // If the currentWord changes and is not empty, start the fade-out effect
+  if (currentWord) {
+    handleSayWord(currentWord);
+    startFadeOut();
+  }
+}, [currentWord, startFadeOut, handleSayWord]);
+```
+
+The above `useEffect` will run not only when `currentWord` changes, but also when `startFadeOut` or `handleSayWord` functions change (if they are not memoized with `useCallback`, for example). It will also run after the initial render if `currentWord` is initialized with a non-empty value.
+
+To prevent `handleSayWord` from being called with `currentWord` when a chip is added to an `input-box`, you might want to add a check that ensures it's only called when `currentWord` actually changes to a new word.
+
+Here's an approach to ensure that `handleSayWord` is only called when `currentWord` changes:
+
+1. Track the previous value of `currentWord`.
+
+```javascript
+const [prevWord, setPrevWord] = useState("");
+
+useEffect(() => {
+  if (currentWord && currentWord !== prevWord) {
+    handleSayWord(currentWord);
+    startFadeOut();
+    setPrevWord(currentWord);
+  }
+}, [currentWord, prevWord, startFadeOut, handleSayWord]);
+```
+
+2. Alternatively, since `currentWord` should not change when a chip is added, you might want to consider separating the concerns: use different states or callbacks for handling the `input-boxes` string and `currentWord`.
+
+For debugging purposes, you may also add a log inside the `useEffect` to see when it's being triggered:
+
+```javascript
+useEffect(() => {
+  console.log('useEffect triggered for currentWord:', currentWord);
+  if (currentWord && currentWord !== prevWord) {
+    handleSayWord(currentWord);
+    startFadeOut();
+    setPrevWord(currentWord);
+  }
+}, [currentWord, prevWord, startFadeOut, handleSayWord]);
+```
+
+This way, you can ensure `handleSayWord` is only called when the `currentWord` actually updates to a new value, rather than just because `currentWord` exists.
+
+---
+
+**User** _at 10:03 pm, Apr 8, 2024_
+
+Your item #2! How can I do that?
+
+---
+
+**Codeium** _at 10:03 pm, Apr 8, 2024_
+
+To separate the concerns of pronouncing the `currentWord` when it's initialized and pronouncing the string from `input-boxes` when a chip is dropped, you can create two distinct functions: one for handling the new word initialization and another for handling the chip drop event. This way, you can control when each pronunciation should occur.
+
+Here is a possible approach:
+
+1. **Separate the pronunciation logic**:
+   Define two separate functions: one for pronouncing `currentWord` when it changes (`pronounceCurrentWord`), and another for pronouncing the `input-boxes` string (`pronounceInputBoxes`).
+
+```javascript
+// This function is called only when the currentWord changes.
+const pronounceCurrentWord = useCallback(() => {
+  if (currentWord) {
+    handleSayWord(currentWord);
+  }
+}, [currentWord, handleSayWord]);
+
+// This function is called when a chip is dropped into an input-box.
+const pronounceInputBoxes = useCallback(() => {
+  // Assuming handleSayWord can handle undefined to construct the word from input boxes
+  handleSayWord();
+}, [handleSayWord]);
+```
+
+2. **Update `useEffect` for new word initialization**:
+   Use `pronounceCurrentWord` inside a `useEffect` that only runs when `currentWord` changes. This effect should not be triggered by chip drops.
+
+```javascript
+useEffect(() => {
+  pronounceCurrentWord();
+  // Start fade-out effect or any other related logic for new word initialization here.
+  startFadeOut();
+}, [pronounceCurrentWord, startFadeOut]);
+```
+
+3. **Call `pronounceInputBoxes` when a chip is dropped**:
+   Call `pronounceInputBoxes` from the event handler that is responsible for handling the drop event of a chip.
+
+```javascript
+// This is your existing logic to handle the drop event.
+const handleChipDrop = (/* parameters for chip drop */) => {
+  // Your logic to update the input-box state with the new chip data
+
+  // After updating the state, call the function to pronounce the input boxes string.
+  pronounceInputBoxes();
+};
+```
+
+4. **Ensure that `handleSayWord` is not called elsewhere unexpectedly**:
+   Check your code to make sure that `handleSayWord` is not being invoked in any other places besides these two scenarios.
+
+By implementing these changes, you separate the logic for pronouncing the `currentWord` upon initialization from the logic for pronouncing the string of characters in the `input-boxes` when a chip is dropped. This should prevent `handleSayWord` from being called twice in the same flow and ensure that each pronunciation occurs in its intended context.
+
+---
+
+**User** _at 10:25 pm, Apr 8, 2024_
+
+I think I've separated all that out to two functions and it's still just saying the current word every time I drop a chip.
+
+---
+
+**Codeium** _at 10:26 pm, Apr 8, 2024_
+
+If the app is still pronouncing the `currentWord` every time you drop a chip despite separating out the concerns, it's likely that the `useEffect` which calls `pronounceCurrentWord` is still being triggered on chip drop. This could happen if the `currentWord` state is somehow being updated on chip drop, or if the dependencies of the `useEffect` are not set correctly.
+
+Here are some steps to troubleshoot and resolve this issue:
+
+1. **Verify `currentWord` State**:
+   Ensure that `currentWord` is not being updated when a chip is dropped. `currentWord` should only change when you're initializing a new word, not when you're updating `inputBoxChips`.
+
+2. **Review `useEffect` Dependencies**:
+   Check the dependencies of the `useEffect` that calls `pronounceCurrentWord`. The effect should only have `currentWord` as a dependency if `pronounceCurrentWord` itself does not change.
+
+   ```javascript
+   useEffect(() => {
+     pronounceCurrentWord();
+     startFadeOut();
+   }, [currentWord]); // Only currentWord should be a dependency
+   ```
+
+3. **Check for Unintended Renders**:
+   Use React Developer Tools to inspect when and why your component is re-rendering. Look for unexpected renders that might be causing the `useEffect` to run.
+
+4. **Inspect `pronounceCurrentWord`**:
+   Check the definition of `pronounceCurrentWord` to ensure that it is correctly memoized with `useCallback` and that its dependency array is set correctly.
+
+5. **Audit Chip Drop Logic**:
+   Go to the logic that handles the chip drop and ensure that it's only calling `pronounceInputBoxes`. It should not cause any side effects that might lead to `currentWord` being updated or `pronounceCurrentWord` being called.
+
+6. **Add Debugging Logs**:
+   Add `console.log` statements to the chip drop logic, `pronounceCurrentWord`, and the `useEffect` that calls `pronounceCurrentWord`. Log out important pieces of state and any relevant actions taken.
+
+   ```javascript
+   const pronounceCurrentWord = useCallback(() => {
+     console.log(`Pronouncing current word: ${currentWord}`);
+     handleSayWord(currentWord);
+   }, [currentWord, handleSayWord]);
+
+   useEffect(() => {
+     console.log(`useEffect triggered for currentWord: ${currentWord}`);
+     pronounceCurrentWord();
+     startFadeOut();
+   }, [currentWord, startFadeOut, pronounceCurrentWord]);
+   ```
+
+7. **Ensure Correct Use of `dispatch`**:
+   Double-check that no `dispatch` calls related to `currentWord` are being made on chip drop.
+
+8. **Review `pronounceInputBoxes` Usage**:
+   Confirm that `pronounceInputBoxes` is being used properly and that it does not indirectly affect `currentWord`.
+
+By carefully reviewing each part of the relevant logic and adding debugging information, you should be able to identify why the `useEffect` is being triggered and prevent `currentWord` from being pronounced on chip drop. If the issue persists, please provide the updated code snippets for `pronounceCurrentWord`, `pronounceInputBoxes`, the chip drop logic, and the `useEffect` that is causing the problem, so I can help you further diagnose the issue.
+
+---
+
+**User** _at 10:32 pm, Apr 8, 2024_
+
+It was the `useEffect` that is calling `pronounceCurrentWord()`. It's working now. I have a very poor understanding of how `useEffect` code is triggered and the meaning of `useEffect` dependencies. Could you explain that?
+
+---
+
+**Codeium** _at 10:32 pm, Apr 8, 2024_
+
+Certainly! Understanding how `useEffect` works and how its dependencies affect its behavior is crucial when working with React functional components.
+
+### `useEffect` Basics
+
+`useEffect` is a hook in React that lets you perform side effects in function components. Side effects are operations that can affect other components or can't be done during rendering, such as data fetching, subscriptions, or manually changing the DOM.
+
+Here's a basic syntax of `useEffect`:
+
+```javascript
+useEffect(() => {
+  // Your side effect code here.
+}, [dependencies]);
+```
+
+- The first argument is a function that React will run after flushing changes to the DOM.
+- The second argument is an array of dependencies that the effect depends on.
+
+### Dependency Array
+
+The dependency array is a list of variables that, when changed, will trigger the effect. Here’s what happens depending on what’s passed in this array:
+
+- **No dependency array (`useEffect` without second argument)**: The effect runs after every completed render.
+
+```javascript
+useEffect(() => {
+  // This runs after every render.
+});
+```
+
+- **Empty dependency array (`[]`)**: The effect runs once after the initial render, acting like `componentDidMount`.
+
+```javascript
+useEffect(() => {
+  // This runs once, similar to componentDidMount.
+}, []);
+```
+
+- **Array with dependencies**: The effect runs after the initial render and every time any dependency value changes.
+
+```javascript
+useEffect(() => {
+  // This runs after the initial render and every time any dependency changes.
+}, [dependency1, dependency2]);
+```
+
+### Rules of `useEffect`
+
+1. **React guarantees the DOM has been updated by the time it runs the effects**.
+
+2. **Effects run for every render, not just once**. This is why React also cleans up effects from the previous render before running the effects next time.
+
+3. **React applies the effect after allowing the browser to paint**, so the user won’t feel any rendering lag.
+
+4. **Effects are declared inside the component** so they have access to its state and props.
+
+### Cleaning up an Effect
+
+Sometimes you need to run some additional code to clean up your effect (for subscriptions, timers, etc.). This is done by returning a function from the effect:
+
+```javascript
+useEffect(() => {
+  // Set up a subscription...
+  return () => {
+    // Clean up the subscription...
+  };
+}, [dependencies]);
+```
+
+### Common Pitfalls
+
+- **Forgetting to specify dependencies**: Leads to effects running more or less often than you intend.
+- **Specifying the wrong dependencies**: Can lead to stale closures (functions that close over stale values from previous renders).
+- **Over-specifying dependencies**: May cause effects to rerun with the same effective values.
+
+### Tips for `useEffect`
+
+- **Use multiple effects to separate concerns** rather than a single effect with a complex logic.
+- **Optimize performance by making sure the dependency array is accurate** so that the effect only runs when needed.
+- **Use `useCallback` to memoize callbacks** that are dependencies of `useEffect` hooks to prevent unnecessary reruns.
+
+Understanding when and why `useEffect` runs can dramatically improve the performance of your application and help prevent bugs related to state synchronization and side effects.
+
+---
+
+**User** _at 10:47 pm, Apr 8, 2024_
+
+When I try to deploy the updated working site to GitHub and it runs the `deploy.yml` I get these errors, but if I add those dependencies back in I get the double-speak again.
+
+```log
+[eslint] 
+16
+src/App.js
+17
+  Line 306:6:  React Hook useEffect has missing dependencies: 'currentWord' and 'pronounceInputBoxes'. Either include them or remove the dependency array    react-hooks/exhaustive-deps
+18
+  Line 327:6:  React Hook useEffect has missing dependencies: 'pronounceCurrentWord' and 'startFadeOut'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+```
+
+---
+
+**Codeium** _at 10:47 pm, Apr 8, 2024_
+
+The error messages you're seeing are from ESLint's `react-hooks/exhaustive-deps` rule, which is part of the `eslint-plugin-react-hooks` package. This rule enforces that all dependencies of `useEffect` hooks are specified in the dependency array. It's intended to help you avoid bugs that could occur due to missing dependencies and stale closures.
+
+However, there are scenarios where you might intentionally exclude certain dependencies from the dependency array, particularly if including them would cause the effect to run too often or reintroduce the issue you just fixed.
+
+To resolve this issue without reintroducing the double-speak bug, you have a couple of options:
+
+1. **Refactor Your Code**:
+   If possible, refactor your code to ensure that the functions you pass into the dependency array are stable and don't change on every render. You can often achieve this by using the `useCallback` hook to memoize callback functions.
+
+   ```javascript
+   const pronounceCurrentWord = useCallback(() => {
+     // Function body
+   }, [currentWord]);
+
+   const pronounceInputBoxes = useCallback(() => {
+     // Function body
+   }, []);
+   ```
+
+   Then, you can include these callbacks in your `useEffect` dependency arrays safely:
+
+   ```javascript
+   useEffect(() => {
+     // Effect that depends on pronounceCurrentWord
+   }, [pronounceCurrentWord]);
+
+   useEffect(() => {
+     // Effect that depends on pronounceInputBoxes
+   }, [pronounceInputBoxes]);
+   ```
+
+2. **Disable the Rule Locally**:
+   If you're confident that your effect is correct as-is, and including the dependencies would cause incorrect behavior, you can disable the rule for that specific line using an ESLint comment.
+
+   ```javascript
+   useEffect(() => {
+     // Your effect logic here
+     // ...
+   }, [/* No dependencies */]); // eslint-disable-line react-hooks/exhaustive-deps
+   ```
+
+   This tells ESLint to ignore the `react-hooks/exhaustive-deps` rule for this specific `useEffect`. Use this option with caution, as it bypasses the safety check provided by the rule.
+
+3. **Disable the Rule Globally**:
+   If you find that you need to bypass this rule often (which shouldn't generally be the case), you can disable the rule in your ESLint configuration file. However, this is not recommended, as it removes an important check for the correctness of your `useEffect` hooks across your whole project.
+
+Choose the best option for your situation. Often, the best approach is to refactor your code to comply with the rule, as this can help prevent subtle bugs. Only disable the rule if you are certain that the dependencies should not be included and that the effect's logic is correct.
+
+---
+
+**User** _at 11:49 pm, Apr 8, 2024_
+
+I want to run a `sed` script from the command line that will find and replace all content in a folder replacing `sell-and-speak` with `sell-and-speak-build`.
+
+---
+
+**Codeium** _at 11:49 pm, Apr 8, 2024_
+
+To perform a find and replace operation on all files within a folder using `sed`, you can combine it with the `find` command to target files and `xargs` to pass the file names to `sed`. The exact command may vary slightly depending on your operating system and shell environment.
+
+Here is a `sed` command that you can run in a Unix-like terminal (like Bash in Linux or macOS) to recursively find and replace all occurrences of `sell-and-speak` with `sell-and-speak-build` within files of a folder:
+
+```shell
+find /path/to/folder -type f -exec sed -i '' 's/sell-and-speak/sell-and-speak-build/g' {} +
+```
+
+- `/path/to/folder`: The path to the folder where the files are located.
+- `-type f`: This tells `find` to look for files only.
+- `-exec`: This allows `find` to execute a command on the matched files.
+- `sed -i '' 's/sell-and-speak/sell-and-speak-build/g'`: This is the `sed` command that performs the replacement.
+  - `-i ''`: Edit files in-place (makes backup if extension supplied). The option `-i ''` is used for macOS. If you're using GNU sed (typically on Linux), you should use `-i` without the empty quotes.
+  - `'s/sell-and-speak/sell-and-speak-build/g'`: The substitution command in `sed`. `s` stands for substitute, `g` stands for global (replace all occurrences).
+
+Remember to replace `/path/to/folder` with the actual path to the directory containing your files.
+
+**Note**: Before running such a command, it is highly recommended to back up the entire folder or at least test the command on a few sample files to ensure it performs as expected. The `-i` flag in `sed` will modify your files in place, which means the original content will be overwritten.
+
+---
+
+**User** _at 11:51 pm, Apr 8, 2024_
+
+is that `find` recursive?
+
+---
+
+**Codeium** _at 11:51 pm, Apr 8, 2024_
+
+Yes, the `find` command is recursive by default. When you specify a directory path as an argument, `find` will search through the specified directory and all of its subdirectories for files that match the given criteria.
+
+For example, the command:
+
+```shell
+find /path/to/folder -type f -exec sed -i '' 's/sell-and-speak/sell-and-speak-build/g' {} +
+```
+
+will search for all files (`-type f`) starting in `/path/to/folder` and in all directories within it, and it will apply the `sed` command to each file found.
+
+This behavior makes `find` very powerful for operations that need to be applied to a whole directory tree. Just make sure to use it with care, especially when combining it with commands that modify files, like `sed -i`.
+
+---
+
+**User** _at 11:53 pm, Apr 8, 2024_
+
+How do I do the find in the whole current drectory and subfolders.
+
+---
+
+**Codeium** _at 11:53 pm, Apr 8, 2024_
+
+To perform the find and replace operation with `sed` in the current directory and all of its subdirectories, you don't need to specify a full path. Instead, you can use `.` (dot) to represent the current directory. Here's the command:
+
+For macOS (BSD sed):
+
+```shell
+find . -type f -exec sed -i '' 's/sell-and-speak/sell-and-speak-build/g' {} +
+```
+
+For Linux (GNU sed):
+
+```shell
+find . -type f -exec sed -i 's/sell-and-speak/sell-and-speak-build/g' {} +
+```
+
+- `.`: Specifies the current directory.
+- `-type f`: Tells `find` to look for files only.
+- `-exec`: Allows `find` to execute a command on the matched files.
+- `sed -i`: Runs `sed` with the `-i` flag for in-place editing. On macOS, you need an empty string (`''`) after `-i` to indicate no backup, whereas on Linux, you just use `-i` without an additional argument.
+- `'s/sell-and-speak/sell-and-speak-build/g'`: The `sed` substitution command to replace `sell-and-speak` with `sell-and-speak-build` globally within each file.
+
+This command will search for and modify files starting from the current directory you are in when you execute the command. Be sure to back up your files before running this command, as it will permanently alter them.
+
+---
+
+**User** _at 11:54 pm, Apr 8, 2024_
+
+We are in Windows. I have BusyBox installed which provides `sed`
+
+---
+
+**Codeium** _at 11:54 pm, Apr 8, 2024_
+
+If you're on Windows and have BusyBox installed, you can use its `find` and `sed` utilities to perform the operation. Open your command prompt or terminal and navigate to the directory where you want to perform the find and replace. Then execute the following command:
+
+```shell
+find . -type f -exec sed -i 's/sell-and-speak/sell-and-speak-build/g' {} \;
+```
+
+Here's what each part of the command does:
+
+- `.`: Specifies the current directory as the starting point for the recursive search.
+- `-type f`: Tells `find` to restrict the search to files only.
+- `-exec`: Instructs `find` to execute the given command for each file found.
+- `sed -i`: Invokes `sed` to perform in-place editing of the files. BusyBox's `sed` might not require an empty string for the `-i` parameter like macOS does.
+- `'s/sell-and-speak/sell-and-speak-build/g'`: The `sed` substitution command to replace `sell-and-speak` with `sell-and-speak-build` globally within each file.
+- `{}`: A placeholder that `find` replaces with the name of the current file being processed.
+- `\;`: Indicates the end of the command that `find` executes.
+
+This command will recursively find all files in the current directory and subdirectories and use `sed` to replace occurrences of `sell-and-speak` with `sell-and-speak-build`.
+
+**Note**: Before running the command on your actual files, it's a good practice to test it on a small set of sample files or directories to ensure that it works as expected. Additionally, make sure to back up your files in case you need to revert the changes.
+
+---
+
+**User** _at 11:57 pm, Apr 8, 2024_
+
+I am getting an error. I think it might be better to use `pwsh`.
+
+---
+
+**Codeium** _at 11:57 pm, Apr 8, 2024_
+
+If you are encountering issues with BusyBox on Windows and you'd like to use PowerShell (which is available as `pwsh` on Windows), you can perform a recursive find and replace using PowerShell cmdlets.
+
+Here's a PowerShell command that you can run to search for all files in the current directory and its subdirectories, and replace `sell-and-speak` with `sell-and-speak-build` in each file:
+
+```powershell
+Get-ChildItem -Recurse -File | ForEach-Object {
+    (Get-Content $_.FullName) -replace 'sell-and-speak', 'sell-and-speak-build' | Set-Content $_.FullName
+}
+```
+
+Here's what each part of the command does:
+
+- `Get-ChildItem -Recurse -File`: Gets all files in the current directory and its subdirectories.
+- `ForEach-Object`: Processes each file object from the pipeline.
+- `Get-Content $_.FullName`: Reads the content of the file.
+- `-replace 'sell-and-speak', 'sell-and-speak-build'`: Replaces all occurrences of `sell-and-speak` with `sell-and-speak-build`.
+- `Set-Content $_.FullName`: Writes the updated content back to the file.
+
+Open PowerShell, navigate to the directory you want to perform the find and replace in, and then run the above command.
+
+**Important Notes**: 
+
+- PowerShell's `-replace` operator uses regex for the search pattern, so if `sell-and-speak` could be interpreted as a regex with special characters, you might need to escape them.
+- This operation will modify the files in place, so be sure to back up your files before running the command to prevent any data loss.

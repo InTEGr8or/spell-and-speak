@@ -53,6 +53,10 @@
   max-width: 200%;
 }
 
+.word-image {
+  width: 200px;
+}
+
 @media (max-width: 600px) { /* Example breakpoint for mobile devices */
   .character-tray {
     /* justify-content: flex-start; Align to the start on small screens */
