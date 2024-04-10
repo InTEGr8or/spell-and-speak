@@ -9,6 +9,7 @@ const CharacterChip = React.forwardRef((props, ref) => {
       className="character-chip"
       draggable="true"
       onDragStart={props.onDragStart}
+      onTouchEnd={props.onTouchEnd}
       // onTouchMove and onTouchEnd are handled differently now
     >
       {props.char}

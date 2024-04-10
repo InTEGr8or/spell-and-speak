@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useReducer } from 'react';
+import React, { useCallback, useRef, useState, useEffect, useReducer } from 'react';
 import './App.css';
 import animals from './resources/animals.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
@@ -173,6 +173,7 @@ function App() {
   
   // Use useReducer hook to manage state
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [chipRefs, setChipRefs] = useState({});
 
   // Replace useState hooks with values from the state object
   const { currentWord, characterChips, inputBoxChips, hasDropped } = state;
@@ -251,8 +252,7 @@ function App() {
     e.preventDefault(); // Necessary to allow dropping
   };
 
-  const handleTouchMove = (e) => {
-    // e.preventDefault();
+  const handleTouchMove = useCallback((e) => {
     e.target.classList.add('dragging');
     e.parentId =e.target.parentNode.id;
     // Get the touch coordinates
@@ -261,7 +261,7 @@ function App() {
     e.target.style.position = 'absolute';
     e.target.style.left = `${touchLocation.pageX - e.target.offsetWidth / 2}px`;
     e.target.style.top = `${touchLocation.pageY - e.target.offsetHeight / 2}px`;
-  };
+  }, []);
 
   const handleDrop = (event, targetInputBoxId) => {
     event.preventDefault();
@@ -413,6 +413,36 @@ function App() {
     startFadeOut();
   }, [state.currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    // Create a ref for each character chip
+    const newChipRefs = characterChips.reduce((acc, chip) => {
+      acc[chip.id] = React.createRef();
+      return acc;
+    }, {});
+
+    setChipRefs(newChipRefs);
+  }, [characterChips]);
+
+  useEffect(() => {
+    // Attach the event listener to each chip
+    Object.values(chipRefs).forEach(ref => {
+      const chipElement = ref.current;
+      if (chipElement) {
+        chipElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+      }
+    });
+
+    // Cleanup function to remove the event listeners
+    return () => {
+      Object.values(chipRefs).forEach(ref => {
+        const chipElement = ref.current;
+        if (chipElement) {
+          chipElement.removeEventListener('touchmove', handleTouchMove);
+        }
+      });
+    };
+  }, [chipRefs]); // Run this effect whenever chipRefs changes
+
   // Determine the class to apply based on the state.fadeOut property
   const wordDisplayClass = state.fadeOut ? 'fade-out' : '';
 
@@ -447,8 +477,6 @@ function App() {
             id: chipId, 
             char: chipId.substring(15,16),
             onDragStart: handleDragStart,
-            onTouchMove: handleTouchMove,
-            onTouchEnd: handleTouchEnd
           } : null;
           return (
             <div 
@@ -456,6 +484,7 @@ function App() {
               id={inputBoxId} 
               className="input-box"
               onDrop={(event) => handleDrop(event, inputBoxId)} // Pass the inputBoxId to handleDrop
+              onTouchEnd={handleTouchEnd}
               onDragOver={handleDragOver}>
               {chip ? <CharacterChip {...chip} /> : null}
             </div>
@@ -467,13 +496,13 @@ function App() {
         className="character-tray" >
         {characterChips.map((chip) => (
           <CharacterChip
+            ref={chipRefs[chip.id]} // Attach the correct ref for this chip
             key={chip.id}
             id={chip.id}
-            data-testid={chip.id}
-            char={chip.char} // Make sure to render `chip.char`, not the whole `chip` object
+            char={chip.char}
             onDragStart={handleDragStart}
-            onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            // onTouchMove and onTouchEnd are now handled by the added event listener
           />
         ))}
       </div>
