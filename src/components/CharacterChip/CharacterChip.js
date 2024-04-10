@@ -7,6 +7,8 @@ const CharacterChip = (props) => {
       className="character-chip"
       draggable="true"
       onDragStart={props.onDragStart}
+      onTouchMove={props.handleTouchMove}
+      onTouchEnd={props.handleTouchEnd}
     >
       {props.char}
     </div>

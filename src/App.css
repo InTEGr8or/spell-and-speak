@@ -30,6 +30,14 @@
   margin: 0 auto;
 }
 
+.nav-buttons {
+  font-size: 2em;
+  padding: 0 30px;
+  &:hover {
+    cursor: pointer;
+  }
+}
+
 .input-box {
   width: 80px;
   height: 80px;

@@ -6,6 +6,7 @@ import './components/CharacterChip/CharacterChip.css';
 
 // Define action types
 const ActionTypes = {
+  MOVE_CHIP: 'MOVE_CHIP',
   DROP_CHIP: 'DROP_CHIP',
   SET_CHARACTER_CHIPS: 'SET_CHARACTER_CHIPS',
   SET_INPUT_BOX_CHIPS: 'SET_INPUT_BOX_CHIPS',
@@ -25,6 +26,43 @@ const reducer = (state, action) => {
         ...state,
         fadeOut: action.payload,
       };
+
+    case ActionTypes.MOVE_CHIP: {
+      const { sourceChipId, sourceLocation, targetInputBoxId } = action.payload;
+
+      // Logic to remove the chip from its source
+      const newCharacterChips = sourceLocation === 'character-tray'
+        ? state.characterChips.filter(chip => chip.id !== sourceChipId)
+        : state.characterChips.slice(); // Create a shallow copy to modify
+
+      const newInputBoxChips = { ...state.inputBoxChips };
+
+      // If the source is an input box, clear the chip from that input box
+      if (sourceLocation.includes('input-box')) {
+        newInputBoxChips[sourceLocation] = null;
+      }
+
+      // Check if there's already a chip in the target input box
+      const replacedChipId = state.inputBoxChips[targetInputBoxId];
+      if (replacedChipId) {
+        // Add the replaced chip back to the character tray
+        newCharacterChips.push({
+          id: replacedChipId,
+          // You may need to include other properties to construct the chip object
+          // For example, if you need the character (char) associated with the chip
+          char: replacedChipId.substring(15,16), // Modify depending on your ID structure
+        });
+      }
+
+      // Logic to place the new chip into the target box
+      newInputBoxChips[targetInputBoxId] = sourceChipId;
+
+      return {
+        ...state,
+        characterChips: newCharacterChips,
+        inputBoxChips: newInputBoxChips,
+      };
+    }
 
     case ActionTypes.INCREMENT_ANIMAL_INDEX: {
       const incrementedIndex = (state.animalIndex + 1) % animals.length;
@@ -156,13 +194,11 @@ function App() {
     // Use the SpeechSynthesis API to pronounce the word
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = 0.6;
-    console.log('Utterance.text:', utterance.text);
     window.speechSynthesis.speak(utterance);
   }, [state.inputBoxChips]); // Include state.inputBoxChips in the dependency array
 
   // Update the handleSayWord function to accept a word parameter
   const handleSayWord = useCallback((word) => {
-    console.log('handleSayWord called with word:', word);
     if ('speechSynthesis' in window) {
       // Browser supports speech synthesis
       sayWord(word);
@@ -188,6 +224,7 @@ function App() {
   const handleDragStart = (e) => {
     const { id } = e.currentTarget;
     e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.setData('parentId', e.nativeEvent.target.parentNode.id);
 
     // Create a drag image
     const dragImage = e.currentTarget.cloneNode(true);
@@ -217,6 +254,7 @@ function App() {
   const handleTouchMove = (e) => {
     e.preventDefault();
     e.target.classList.add('dragging');
+    e.dataTransfer.setData('parentId', e.target.parentNode.id);
     // Get the touch coordinates
     const touchLocation = e.targetTouches[0];
     // Set the style to move the element with the touch
@@ -227,15 +265,20 @@ function App() {
 
   const handleDrop = (event, targetInputBoxId) => {
     event.preventDefault();
-    const draggedChipId = event.dataTransfer.getData("text/plain");
-
-    // Make sure that targetInputBoxId is defined
-    if (typeof targetInputBoxId === 'undefined') {
-      return; // Exit early if targetInputBoxId is not valid
-    }
+    // Get the dragged chip ID either from touch or mouse dataTransfer
+    const draggedChipId = event.dataTransfer
+      ? event.dataTransfer.getData("text/plain")
+      : event.target.id; // Assuming the touch event sets the id on the target
+    let draggedFromLocation = event.dataTransfer.getData("parentId"); // 'characterChips' or 'inputBoxChips'
+    const droppedIntoInputBoxId = targetInputBoxId;
+    // Update the state to reflect the chip moving from the source to the destination
     dispatch({
-      type: ActionTypes.DROP_CHIP,
-      payload: { draggedChipId, targetInputBoxId },
+      type: ActionTypes.MOVE_CHIP,
+      payload: {
+        sourceChipId: draggedChipId,
+        sourceLocation: draggedFromLocation, // 'characterChips' or 'inputBoxChips'
+        targetInputBoxId: droppedIntoInputBoxId, // This might be undefined if dropping back to character tray
+      },
     });
   };
 
@@ -244,6 +287,7 @@ function App() {
     const touchLocation = e.changedTouches[0];
     const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
     const draggedChipId = e.target.id;
+    // const sourceLocation = /* determine if the chip came from an input box or the character tray */;
 
     const targetInputBoxId
       = Object
@@ -259,24 +303,18 @@ function App() {
           );
         });
 
-
-    // If we found a target box, process the chip drop
-    if (targetInputBoxId) {
-      // You can now use chipChar if needed for further logic
-      dispatch({
-        type: ActionTypes.DROP_CHIP,
-        payload: { draggedChipId, targetInputBoxId }, // Include chipChar in the payload if necessary
-      });
-    } else {
-      // Logic for unsuccessful drop (e.g., move back to original position)
-    }
-
     // Reset styles or any state as needed
     e.target.classList.remove('dragging');
     e.target.removeAttribute('style');
     e.target.style.position = '';
     e.target.style.left = '';
     e.target.style.top = '';
+    // Call handleDrop with the necessary information
+    handleDrop({
+      preventDefault: () => {}, // Mock preventDefault function
+      dataTransfer: "from handleTouchEnd", // No dataTransfer in touch events
+      target: { id: draggedChipId }, // Set the id of the dragged chip
+    }, targetInputBoxId);
   }, [inputBoxChips]);
 
   useEffect(() => {
@@ -348,7 +386,6 @@ function App() {
   
   // Use an effect to call your callback after the state has been updated
   useEffect(() => {
-    console.log('Current word is now:', currentWord);
     if (hasDropped) {
       // Call your callback function
       pronounceInputBoxes();
@@ -391,24 +428,31 @@ function App() {
         {/* Display the current word and its image (if applicable) */}
         {currentWord && (
           <>
-            <img class="word-image" src={`/assets/images/${currentWord}.webp`}  alt={currentWord} />
+            <img className="word-image" src={`/assets/images/${currentWord}.webp`}  alt={currentWord} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <button onClick={() => dispatch({ type: ActionTypes.DECREMENT_ANIMAL_INDEX })}>
-                Left Arrow
-              </button>
+              <div className="nav-buttons" onClick={() => dispatch({ type: ActionTypes.DECREMENT_ANIMAL_INDEX })}>
+                &larr;
+              </div>
               <div className={`word-display ${wordDisplayClass}`}>{currentWord}</div>
-              <button onClick={() => dispatch({ type: ActionTypes.INCREMENT_ANIMAL_INDEX })}>
-                Right Arrow
-              </button>
+              <div className="nav-buttons"onClick={() => dispatch({ type: ActionTypes.INCREMENT_ANIMAL_INDEX })}>
+                &rarr;
+              </div>
             </div>
           </>
         )}
       </div>
       <div
+        id="input-boxes"
         className="input-boxes">
         {Object.keys(inputBoxChips).map((inputBoxId) => {
           const chipId = inputBoxChips[inputBoxId];
-          const chip = chipId ? {id: chipId, char: chipId.substring(15,16)} : null;
+          const chip = chipId ? {
+            id: chipId, 
+            char: chipId.substring(15,16),
+            onDragStart: handleDragStart,
+            onTouchMove: handleTouchMove,
+            onTouchEnd: handleTouchEnd
+          } : null;
           return (
             <div 
               key={inputBoxId} 
@@ -421,7 +465,9 @@ function App() {
           );
         })}
       </div>
-      <div className="character-tray">
+      <div
+        id="character-tray" 
+        className="character-tray" >
         {characterChips.map((chip) => (
           <CharacterChip
             key={chip.id}
@@ -429,6 +475,8 @@ function App() {
             data-testid={chip.id}
             char={chip.char} // Make sure to render `chip.char`, not the whole `chip` object
             onDragStart={handleDragStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           />
         ))}
       </div>
