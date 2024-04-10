@@ -214,13 +214,23 @@ function App() {
     if (currentWord) {
       handleSayWord(currentWord);
     }
-  }, [currentWord, handleSayWord]);
+  }, [currentWord]);
+
+  useEffect(() => {
+    pronounceCurrentWord();
+    // Start fade-out effect or any other related logic for new word initialization here.
+    startFadeOut();
+  }, [state.currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This function is called when a chip is dropped into an input-box.
   const pronounceInputBoxes = useCallback(() => {
     // Assuming handleSayWord can handle undefined to construct the word from input boxes
     handleSayWord();
   }, [handleSayWord]);
+
+  useEffect(() => {
+    pronounceInputBoxes();
+  }, [inputBoxChips]);
 
   const handleDragStart = (e) => {
     const { id } = e.currentTarget;
@@ -384,9 +394,6 @@ function App() {
   // Use an effect to call your callback after the state has been updated
   useEffect(() => {
     if (hasDropped) {
-      // Call your callback function
-      pronounceInputBoxes();
-
       // Reset the drop indicator
       dispatch({ type: ActionTypes.SET_HAS_DROPPED, payload: false })
     }
@@ -407,11 +414,6 @@ function App() {
 
   }, [dispatch]);
 
-  useEffect(() => {
-    pronounceCurrentWord();
-    // Start fade-out effect or any other related logic for new word initialization here.
-    startFadeOut();
-  }, [state.currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Create a ref for each character chip
