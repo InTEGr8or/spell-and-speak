@@ -424,6 +424,18 @@ function App() {
   }, [characterChips]);
 
   useEffect(() => {
+    const handleTouchMove = (e) => {
+      e.preventDefault(); // This should prevent the default scrolling behavior
+      // Duplicated from handleTouchMove
+      e.target.classList.add('dragging');
+      e.parentId =e.target.parentNode.id;
+      // Get the touch coordinates
+      const touchLocation = e.targetTouches[0];
+      // Set the style to move the element with the touch
+      e.target.style.position = 'absolute';
+      e.target.style.left = `${touchLocation.pageX - e.target.offsetWidth / 2}px`;
+      e.target.style.top = `${touchLocation.pageY - e.target.offsetHeight / 2}px`;
+    };
     // Attach the event listener to each chip
     Object.values(chipRefs).forEach(ref => {
       const chipElement = ref.current;
@@ -441,7 +453,7 @@ function App() {
         }
       });
     };
-  }, [chipRefs]); // Run this effect whenever chipRefs changes
+  }, [chipRefs, handleTouchMove]); // Run this effect whenever chipRefs changes
 
   // Determine the class to apply based on the state.fadeOut property
   const wordDisplayClass = state.fadeOut ? 'fade-out' : '';
