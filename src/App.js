@@ -13,6 +13,8 @@ const ActionTypes = {
   INIT_NEW_WORD: 'INIT_NEW_WORD',
   SET_FADE_OUT: 'SET_FADE_OUT',
   PROGRESS_TO_NEXT_ANIMAL: 'PROGRESS_TO_NEXT_ANIMAL',
+  INCREMENT_ANIMAL_INDEX: 'INCREMENT_ANIMAL_INDEX',
+  DECREMENT_ANIMAL_INDEX: 'DECREMENT_ANIMAL_INDEX',
 };
 
 // Define the reducer function
@@ -23,7 +25,26 @@ const reducer = (state, action) => {
         ...state,
         fadeOut: action.payload,
       };
-    // Inside the reducer function
+
+    case ActionTypes.INCREMENT_ANIMAL_INDEX: {
+      const incrementedIndex = (state.animalIndex + 1) % animals.length;
+      // ... logic to update state based on incrementedIndex ...
+      return {
+        ...state,
+        animalIndex: incrementedIndex,
+        // ... other state updates if needed ...
+      };
+    }
+    case ActionTypes.DECREMENT_ANIMAL_INDEX: {
+      const decrementedIndex = (state.animalIndex - 1 + animals.length) % animals.length;
+      // ... logic to update state based on decrementedIndex ...
+      return {
+        ...state,
+        animalIndex: decrementedIndex,
+        // ... other state updates if needed ...
+      };
+    }
+
     case ActionTypes.PROGRESS_TO_NEXT_ANIMAL: {
       let nextAnimalIndex = (state.animalIndex + 1) % animals.length; // Wraps around to the beginning
       localStorage.setItem('animalIndex', nextAnimalIndex); // Save the new index to localStorage
@@ -354,7 +375,7 @@ function App() {
     pronounceCurrentWord();
     // Start fade-out effect or any other related logic for new word initialization here.
     startFadeOut();
-  }, [currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state.currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Determine the class to apply based on the state.fadeOut property
   const wordDisplayClass = state.fadeOut ? 'fade-out' : '';
@@ -368,10 +389,16 @@ function App() {
         {/* Display the current word and its image (if applicable) */}
         {currentWord && (
           <>
-          <img class="word-image" src={`/assets/images/${currentWord}.webp`}  alt={currentWord} />
-          <div className={`word-display ${wordDisplayClass}`}>
-            <div>{currentWord}</div>
-          </div>
+            <img class="word-image" src={`/assets/images/${currentWord}.webp`}  alt={currentWord} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={() => dispatch({ type: ActionTypes.DECREMENT_ANIMAL_INDEX })}>
+                Left Arrow
+              </button>
+              <div className={`word-display ${wordDisplayClass}`}>{currentWord}</div>
+              <button onClick={() => dispatch({ type: ActionTypes.INCREMENT_ANIMAL_INDEX })}>
+                Right Arrow
+              </button>
+            </div>
           </>
         )}
       </div>
