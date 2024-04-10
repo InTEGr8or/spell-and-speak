@@ -1,118 +1,118 @@
 [
   {
-    "word": "CAT",
+    "name": "CAT",
     "image": "cat.webp"
   },
   {
-    "word": "DOG",
-    "image": "dog.webp"
-  },
-  {
-    "word": "BIRD",
-    "image": "bird.webp"
-  },
-  {
-    "word": "FISH",
-    "image": "fish.webp"
-  },
-  {
-    "word": "CHICKEN",
-    "image": "chicken.webp"
-  },
-  {
-    "word": "FROG",
-    "image": "frog.webp"
-  },
-  {
-    "word": "HORSE",
-    "image": "horse.webp"
-  },
-  {
-    "word": "LION",
-    "image": "lion.webp"
-  },
-  {
-    "word": "SHEEP",
-    "image": "sheep.webp"
-  },
-  {
-    "word": "TURTLE",
-    "image": "turtle.webp"
-  },
-  {
-    "word": "WOLF",
-    "image": "wolf.webp"
-  },
-  {
-    "word": "ZEBRA",
-    "image": "zebra.webp"
-  },
-  {
-    "word": "BEAR",
-    "image": "bear.webp"
-  },
-  {
-    "word": "MOUSE",
-    "image": "mouse.webp"
-  },
-  {
-    "word": "COW",
-    "image": "cow.webp"
-  },
-  {
-    "word": "PIG",
-    "image": "pig.webp"
-  },
-  {
-    "word": "RAT",
+    "name": "RAT",
     "image": "rat.webp"
   },
   {
-    "word": "TIGER",
-    "image": "tiger.webp"
+    "name": "PIG",
+    "image": "pig.webp"
   },
   {
-    "word": "ELEPHANT",
-    "image": "elephant.webp"
+    "name": "COW",
+    "image": "cow.webp"
   },
   {
-    "word": "RABBIT",
-    "image": "rabbit.webp"
+    "name": "DOG",
+    "image": "dog.webp"
   },
   {
-    "word": "SQUIRREL",
-    "image": "squirrel.webp"
+    "name": "FROG",
+    "image": "frog.webp"
   },
   {
-    "word": "DEER",
-    "image": "deer.webp"
+    "name": "LION",
+    "image": "lion.webp"
   },
   {
-    "word": "ALLIGATOR",
-    "image": "alligator.webp"
-  },
-  {
-    "word": "BEETLE",
-    "image": "beetle.webp"
-  },
-  {
-    "word": "CRAB",
+    "name": "CRAB",
     "image": "crab.webp"
   },
   {
-    "word": "OCTOPUS",
-    "image": "octopus.webp"
+    "name": "DEER",
+    "image": "deer.webp"
   },
   {
-    "word": "SNAIL",
+    "name": "WOLF",
+    "image": "wolf.webp"
+  },
+  {
+    "name": "BEAR",
+    "image": "bear.webp"
+  },
+  {
+    "name": "FISH",
+    "image": "fish.webp"
+  },
+  {
+    "name": "BIRD",
+    "image": "bird.webp"
+  },
+  {
+    "name": "SNAIL",
     "image": "snail.webp"
   },
   {
-    "word": "SPIDER",
+    "name": "TIGER",
+    "image": "tiger.webp"
+  },
+  {
+    "name": "WHALE",
+    "image": "whale.webp"
+  },
+  {
+    "name": "MOUSE",
+    "image": "mouse.webp"
+  },
+  {
+    "name": "ZEBRA",
+    "image": "zebra.webp"
+  },
+  {
+    "name": "SHEEP",
+    "image": "sheep.webp"
+  },
+  {
+    "name": "HORSE",
+    "image": "horse.webp"
+  },
+  {
+    "name": "RABBIT",
+    "image": "rabbit.webp"
+  },
+  {
+    "name": "TURTLE",
+    "image": "turtle.webp"
+  },
+  {
+    "name": "BEETLE",
+    "image": "beetle.webp"
+  },
+  {
+    "name": "SPIDER",
     "image": "spider.webp"
   },
   {
-    "word": "WHALE",
-    "image": "whale.webp"
+    "name": "OCTOPUS",
+    "image": "octopus.webp"
+  },
+  {
+    "name": "CHICKEN",
+    "image": "chicken.webp"
+  },
+  {
+    "name": "ELEPHANT",
+    "image": "elephant.webp"
+  },
+  {
+    "name": "SQUIRREL",
+    "image": "squirrel.webp"
+  },
+  {
+    "name": "ALLIGATOR",
+    "image": "alligator.webp"
   }
 ]

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useReducer } from 'react';
 import './App.css';
-import wordList from './resources/animals.json';
+import animals from './resources/animals.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
 import './components/CharacterChip/CharacterChip.css';
 
@@ -12,6 +12,7 @@ const ActionTypes = {
   SET_HAS_DROPPED: 'SET_HAS_DROPPED',
   INIT_NEW_WORD: 'INIT_NEW_WORD',
   SET_FADE_OUT: 'SET_FADE_OUT',
+  PROGRESS_TO_NEXT_ANIMAL: 'PROGRESS_TO_NEXT_ANIMAL',
 };
 
 // Define the reducer function
@@ -22,6 +23,26 @@ const reducer = (state, action) => {
         ...state,
         fadeOut: action.payload,
       };
+    // Inside the reducer function
+    case ActionTypes.PROGRESS_TO_NEXT_ANIMAL: {
+      let nextAnimalIndex = (state.animalIndex + 1) % animals.length; // Wraps around to the beginning
+      localStorage.setItem('animalIndex', nextAnimalIndex); // Save the new index to localStorage
+      let newWordObject = animals[nextAnimalIndex];
+      let newWord = newWordObject.name;
+      let newInputBoxChips = {};
+
+      for (let i = 0; i < newWord.length; i++) {
+        newInputBoxChips[`input-box-${i}`] = null;
+      }
+
+      return {
+        ...state,
+        animalIndex: nextAnimalIndex,
+        currentWord: newWord,
+        inputBoxChips: newInputBoxChips,
+        // Reset any other relevant state properties as needed
+      };
+    }
     case ActionTypes.DROP_CHIP: {
       const { draggedChipId, targetInputBoxId} = action.payload;
       const existingChipId = state.inputBoxChips[targetInputBoxId];
@@ -86,6 +107,7 @@ function App() {
     inputBoxChips: {}, // Initialize with your input boxes data
     hasDropped: false,
     fadeOut: false,
+    animalIndex: parseInt(localStorage.getItem('animalIndex'), 10) || 0,
   };
   
   // Use useReducer hook to manage state
@@ -235,10 +257,18 @@ function App() {
   }, [inputBoxChips]);
 
   useEffect(() => {
-    // Select a random word from the word list
-    const randomIndex = Math.floor(Math.random() * wordList.length);
-    const newWordObject = wordList[randomIndex];
-    const newWord = newWordObject.word;
+    // Check if all input-boxes are filled correctly
+    const allBoxesString = Object.values(state.inputBoxChips)
+      .map(c => (c ?? ' ').substring(15,16)).join('');
+
+    if (allBoxesString === state.currentWord) {
+      dispatch({ type: ActionTypes.PROGRESS_TO_NEXT_ANIMAL });
+    }
+  }, [state.inputBoxChips, dispatch]);
+
+  useEffect(() => {
+    // Select an animal from the animal list
+    const newWord = animals[state.animalIndex].name;
     const newInputBoxChips = {};
 
     for (let i = 0; i < newWord.length; i++) {
@@ -276,7 +306,7 @@ function App() {
         shuffledCharacters,
       },
     });
-  }, [dispatch]);
+  }, [state.animalIndex, dispatch]);
 
   useEffect(() => {
     // Attach touch event listeners
@@ -289,11 +319,7 @@ function App() {
 
     // Cleanup function to remove event listeners
     return () => {
-      characterChipsElements.forEach((chip) => {
-        chip.removeEventListener('touchmove', handleTouchMove);
-        chip.removeEventListener('touchend', handleTouchEnd);
-        // Remove any other event listeners you added
-      });
+
     };
   }, [characterChips, handleTouchEnd]); // Dependency array includes characterChips to re-run the effect when it changes
   
@@ -354,7 +380,6 @@ function App() {
         {Object.keys(inputBoxChips).map((inputBoxId) => {
           const chipId = inputBoxChips[inputBoxId];
           const chip = chipId ? {id: chipId, char: chipId.substring(15,16)} : null;
-
           return (
             <div 
               key={inputBoxId} 
