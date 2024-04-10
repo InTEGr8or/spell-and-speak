@@ -264,7 +264,7 @@ function App() {
     if (allBoxesString === state.currentWord) {
       dispatch({ type: ActionTypes.PROGRESS_TO_NEXT_ANIMAL });
     }
-  }, [state.inputBoxChips, dispatch]);
+  }, [state.inputBoxChips, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Select an animal from the animal list
