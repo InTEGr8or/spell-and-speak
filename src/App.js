@@ -28,6 +28,7 @@ const reducer = (state, action) => {
 
     case ActionTypes.INCREMENT_ANIMAL_INDEX: {
       const incrementedIndex = (state.animalIndex + 1) % animals.length;
+      localStorage.setItem('animalIndex', incrementedIndex);
       // ... logic to update state based on incrementedIndex ...
       return {
         ...state,
@@ -37,6 +38,7 @@ const reducer = (state, action) => {
     }
     case ActionTypes.DECREMENT_ANIMAL_INDEX: {
       const decrementedIndex = (state.animalIndex - 1 + animals.length) % animals.length;
+      localStorage.setItem('animalIndex', decrementedIndex);
       // ... logic to update state based on decrementedIndex ...
       return {
         ...state,
