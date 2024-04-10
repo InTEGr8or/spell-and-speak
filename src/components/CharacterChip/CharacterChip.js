@@ -1,18 +1,19 @@
+import React from 'react';
 
-const CharacterChip = (props) => {
+const CharacterChip = React.forwardRef((props, ref) => {
   return (
     <div
+      ref={ref}
       id={props.id}
       data-testid={props.id}
       className="character-chip"
       draggable="true"
       onDragStart={props.onDragStart}
-      onTouchMove={props.handleTouchMove}
-      onTouchEnd={props.handleTouchEnd}
+      // onTouchMove and onTouchEnd are handled differently now
     >
       {props.char}
     </div>
   );
-};
+});
 
 export default CharacterChip;

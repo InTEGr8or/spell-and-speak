@@ -252,9 +252,9 @@ function App() {
   };
 
   const handleTouchMove = (e) => {
-    e.preventDefault();
+    // e.preventDefault();
     e.target.classList.add('dragging');
-    e.dataTransfer.setData('parentId', e.target.parentNode.id);
+    e.parentId =e.target.parentNode.id;
     // Get the touch coordinates
     const touchLocation = e.targetTouches[0];
     // Set the style to move the element with the touch
@@ -266,10 +266,16 @@ function App() {
   const handleDrop = (event, targetInputBoxId) => {
     event.preventDefault();
     // Get the dragged chip ID either from touch or mouse dataTransfer
-    const draggedChipId = event.dataTransfer
+    const draggedChipId 
+      = event.dataTransfer
       ? event.dataTransfer.getData("text/plain")
       : event.target.id; // Assuming the touch event sets the id on the target
-    let draggedFromLocation = event.dataTransfer.getData("parentId"); // 'characterChips' or 'inputBoxChips'
+
+    let draggedFromLocation 
+      = event.dataTransfer
+      ? event.dataTransfer.getData("parentId")
+      : event.parentId; // 'characterChips' or 'inputBoxChips'
+
     const droppedIntoInputBoxId = targetInputBoxId;
     // Update the state to reflect the chip moving from the source to the destination
     dispatch({
@@ -309,10 +315,16 @@ function App() {
     e.target.style.position = '';
     e.target.style.left = '';
     e.target.style.top = '';
+    // Determine if the chip was dragged from an input box or the character tray for touch or click.
+    const parentId 
+      = e.target.parentNode
+      ? e.target.parentNode.id
+      : document.getElementById(e.target.id).parentNode.id;
     // Call handleDrop with the necessary information
     handleDrop({
       preventDefault: () => {}, // Mock preventDefault function
-      dataTransfer: "from handleTouchEnd", // No dataTransfer in touch events
+      dataTransfer: false, // Mock dataTransfer
+      parentId: parentId,
       target: { id: draggedChipId }, // Set the id of the dragged chip
     }, targetInputBoxId);
   }, [inputBoxChips]);
@@ -368,21 +380,6 @@ function App() {
       },
     });
   }, [state.animalIndex, dispatch]);
-
-  useEffect(() => {
-    // Attach touch event listeners
-    const characterChipsElements = document.querySelectorAll('.character-chip');
-    characterChipsElements.forEach((chip) => {
-      chip.addEventListener('touchmove', handleTouchMove);
-      chip.addEventListener('touchend', handleTouchEnd);
-      // Add any other event listeners you need here
-    });
-
-    // Cleanup function to remove event listeners
-    return () => {
-
-    };
-  }, [characterChips, handleTouchEnd]); // Dependency array includes characterChips to re-run the effect when it changes
   
   // Use an effect to call your callback after the state has been updated
   useEffect(() => {
