@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState, useEffect, useReducer } from 'react';
+import React, { useCallback, useState, useEffect, useReducer } from 'react';
 import './App.css';
 import animals from './resources/animals.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
