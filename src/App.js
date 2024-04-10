@@ -214,7 +214,7 @@ function App() {
     if (currentWord) {
       handleSayWord(currentWord);
     }
-  }, [currentWord]);
+  }, [currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     pronounceCurrentWord();
@@ -230,7 +230,7 @@ function App() {
 
   useEffect(() => {
     pronounceInputBoxes();
-  }, [inputBoxChips]);
+  }, [inputBoxChips]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDragStart = (e) => {
     const { id } = e.currentTarget;
