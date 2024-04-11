@@ -463,14 +463,17 @@ function App() {
 
   return (
     <div className="app">
-      <div onClick={() => pronounceCurrentWord(currentWord)}>
+      <div>
         <header className="header" >
           SPELL-AND-SPEAK
         </header>
         {/* Display the current word and its image (if applicable) */}
         {currentWord && (
           <>
-            <img className="word-image" src={`/assets/images/${currentWord}.webp`}  alt={currentWord} />
+            <img 
+              onClick={() => pronounceCurrentWord(currentWord)} 
+              className="word-image" 
+              src={`/assets/images/${currentWord}.webp`}  alt={currentWord} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="nav-buttons" onClick={() => dispatch({ type: ActionTypes.DECREMENT_ANIMAL_INDEX })}>
                 &larr;
