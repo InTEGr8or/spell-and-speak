@@ -16,6 +16,7 @@ const ActionTypes = {
   PROGRESS_TO_NEXT_ANIMAL: 'PROGRESS_TO_NEXT_ANIMAL',
   INCREMENT_ANIMAL_INDEX: 'INCREMENT_ANIMAL_INDEX',
   DECREMENT_ANIMAL_INDEX: 'DECREMENT_ANIMAL_INDEX',
+  CONGRATULATE: 'CONGRATULATE',
 };
 
 // Define the reducer function
@@ -26,6 +27,7 @@ const reducer = (state, action) => {
         ...state,
         fadeOut: action.payload,
       };
+    
 
     case ActionTypes.MOVE_CHIP: {
       const { sourceChipId, sourceLocation, targetInputBoxId } = action.payload;
@@ -149,6 +151,12 @@ const reducer = (state, action) => {
       };
     case ActionTypes.INIT_NEW_WORD: {
       const { newWord, newInputBoxChips, shuffledCharacters } = action.payload;
+      const inputBoxElements = document.querySelectorAll('.input-box');
+      inputBoxElements.forEach(inputBox => {
+        inputBox.style.border = '1px dashed grey';
+        inputBox.style.opacity = 1;
+        inputBox.style.transition = null;
+      });
       return {
         ...state,
         currentWord: newWord,
@@ -156,6 +164,21 @@ const reducer = (state, action) => {
         characterChips: shuffledCharacters,
         fadeOut: false,
       };
+    }
+    case ActionTypes.CONGRATULATE: {
+      // Set each input box border to solid green and then fade them out
+      setTimeout(() => {
+        const inputBoxElements = document.querySelectorAll('.input-box');
+        inputBoxElements.forEach(inputBox => {
+          inputBox.style.border = '2px solid green';
+        });
+        setTimeout(() => {
+          inputBoxElements.forEach(inputBox => {
+            inputBox.style.transition = 'opacity 1s ease-in-out';
+            inputBox.style.opacity = 0;
+          });
+        }, 500);
+      }, 500);
     }
     default:
       return state;
@@ -350,7 +373,13 @@ function App() {
       .map(c => (c ?? ' ').substring(15,16)).join('');
 
     if (allBoxesString === state.currentWord) {
-      dispatch({ type: ActionTypes.PROGRESS_TO_NEXT_ANIMAL });
+      // TODO: Celebrate success better
+      dispatch({ type: ActionTypes.CONGRATULATE });
+
+      // Progress to next animal
+      setTimeout(() => {
+        dispatch({ type: ActionTypes.PROGRESS_TO_NEXT_ANIMAL });
+      }, 3000)
     }
   }, [state.inputBoxChips, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
