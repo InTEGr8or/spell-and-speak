@@ -151,18 +151,16 @@ const reducer = (state, action) => {
       };
     case ActionTypes.CONGRATULATE: {
       // Set each input box border to solid green and then fade them out
+      const inputBoxElements = document.querySelectorAll('.input-box');
+      inputBoxElements.forEach(inputBox => {
+        inputBox.style.border = '2px solid green';
+      });
       setTimeout(() => {
-        const inputBoxElements = document.querySelectorAll('.input-box');
         inputBoxElements.forEach(inputBox => {
-          inputBox.style.border = '2px solid green';
+          inputBox.style.transition = 'opacity 1s ease-in-out';
+          inputBox.style.opacity = 0;
         });
-        setTimeout(() => {
-          inputBoxElements.forEach(inputBox => {
-            inputBox.style.transition = 'opacity 1s ease-in-out';
-            inputBox.style.opacity = 0;
-          });
-        }, 500);
-      }, 500);
+      }, 1000);
       return {
         ...state,
         // Reset any other relevant state properties as needed
@@ -191,6 +189,7 @@ const reducer = (state, action) => {
 };
 
 function App() {
+  const waitTransitionMilliseconds = 1500;
   // Define the initial state within the App or import from another file
   const initialState = {
     characterChips: [], // Initialize with your character chips data
@@ -384,7 +383,7 @@ function App() {
       // Progress to next animal
       setTimeout(() => {
         dispatch({ type: ActionTypes.PROGRESS_TO_NEXT_ANIMAL });
-      }, 3000)
+      }, waitTransitionMilliseconds)
     }
   }, [state.inputBoxChips, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
