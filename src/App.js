@@ -163,7 +163,10 @@ const reducer = (state, action) => {
           });
         }, 500);
       }, 500);
-      break;
+      return {
+        ...state,
+        // Reset any other relevant state properties as needed
+      };
     }
     case ActionTypes.INIT_NEW_WORD: {
       const { newWord, newInputBoxChips, shuffledCharacters } = action.payload;
