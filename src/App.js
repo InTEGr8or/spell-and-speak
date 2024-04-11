@@ -29,6 +29,7 @@ const reducer = (state, action) => {
 
     case ActionTypes.MOVE_CHIP: {
       const { sourceChipId, sourceLocation, targetInputBoxId } = action.payload;
+      if(!targetInputBoxId) return state;
 
       // Logic to remove the chip from its source
       const newCharacterChips = sourceLocation === 'character-tray'
