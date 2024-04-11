@@ -276,11 +276,15 @@ function App() {
 
   const handleDrop = (event, targetInputBoxId) => {
     event.preventDefault();
+    console.log("e.target.id:", event.target.id);
     // Get the dragged chip ID either from touch or mouse dataTransfer
     const draggedChipId 
       = event.dataTransfer
       ? event.dataTransfer.getData("text/plain")
       : event.target.id; // Assuming the touch event sets the id on the target
+
+    // Don't drag an input box.
+    if(draggedChipId.includes("input-box-")) return;
 
     let draggedFromLocation 
       = event.dataTransfer
@@ -503,7 +507,8 @@ function App() {
               className="input-box"
               onDrop={(event) => handleDrop(event, inputBoxId)} // Pass the inputBoxId to handleDrop
               onTouchEnd={handleTouchEnd}
-              onDragOver={handleDragOver}>
+              onDragOver={handleDragOver}
+              >
               {chip ? <CharacterChip {...chip} /> : null}
             </div>
           );
