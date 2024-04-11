@@ -149,6 +149,22 @@ const reducer = (state, action) => {
         ...state,
         hasDropped: action.payload,
       };
+    case ActionTypes.CONGRATULATE: {
+      // Set each input box border to solid green and then fade them out
+      setTimeout(() => {
+        const inputBoxElements = document.querySelectorAll('.input-box');
+        inputBoxElements.forEach(inputBox => {
+          inputBox.style.border = '2px solid green';
+        });
+        setTimeout(() => {
+          inputBoxElements.forEach(inputBox => {
+            inputBox.style.transition = 'opacity 1s ease-in-out';
+            inputBox.style.opacity = 0;
+          });
+        }, 500);
+      }, 500);
+      break;
+    }
     case ActionTypes.INIT_NEW_WORD: {
       const { newWord, newInputBoxChips, shuffledCharacters } = action.payload;
       const inputBoxElements = document.querySelectorAll('.input-box');
@@ -165,21 +181,7 @@ const reducer = (state, action) => {
         fadeOut: false,
       };
     }
-    case ActionTypes.CONGRATULATE: {
-      // Set each input box border to solid green and then fade them out
-      setTimeout(() => {
-        const inputBoxElements = document.querySelectorAll('.input-box');
-        inputBoxElements.forEach(inputBox => {
-          inputBox.style.border = '2px solid green';
-        });
-        setTimeout(() => {
-          inputBoxElements.forEach(inputBox => {
-            inputBox.style.transition = 'opacity 1s ease-in-out';
-            inputBox.style.opacity = 0;
-          });
-        }, 500);
-      }, 500);
-    }
+    
     default:
       return state;
   }
