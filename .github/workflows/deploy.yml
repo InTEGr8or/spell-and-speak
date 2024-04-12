@@ -31,4 +31,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}  # GitHub automatically creates a GITHUB_TOKEN secret to use in your workflow
-          publish_dir: ./build          
+          publish_dir: ./build      
+          publish_branch: gh-pages    

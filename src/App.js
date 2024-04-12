@@ -70,20 +70,26 @@ const reducer = (state, action) => {
     case ActionTypes.INCREMENT_ANIMAL_INDEX: {
       const incrementedIndex = (state.animalIndex + 1) % animals.length;
       localStorage.setItem('animalIndex', incrementedIndex);
+      const newWord = animals[incrementedIndex].name;
       // ... logic to update state based on incrementedIndex ...
       return {
         ...state,
+        currentWord: newWord,
         animalIndex: incrementedIndex,
+        // fadeOut: false,
         // ... other state updates if needed ...
       };
     }
     case ActionTypes.DECREMENT_ANIMAL_INDEX: {
       const decrementedIndex = (state.animalIndex - 1 + animals.length) % animals.length;
       localStorage.setItem('animalIndex', decrementedIndex);
+      const newWord = animals[decrementedIndex].name;
       // ... logic to update state based on decrementedIndex ...
       return {
         ...state,
+        currentWord: newWord,
         animalIndex: decrementedIndex,
+        // fadeOut: false,
         // ... other state updates if needed ...
       };
     }
@@ -104,6 +110,7 @@ const reducer = (state, action) => {
         animalIndex: nextAnimalIndex,
         currentWord: newWord,
         inputBoxChips: newInputBoxChips,
+        // fadeOut: true,
         // Reset any other relevant state properties as needed
       };
     }
@@ -135,16 +142,19 @@ const reducer = (state, action) => {
       };
     }
     case ActionTypes.SET_CHARACTER_CHIPS:
+      debugger;
       return {
         ...state,
         characterChips: action.payload,
       };
     case ActionTypes.SET_INPUT_BOX_CHIPS:
+      debugger;
       return {
         ...state,
         inputBoxChips: action.payload,
       };
     case ActionTypes.SET_HAS_DROPPED:
+      debugger;
       return {
         ...state,
         hasDropped: action.payload,
@@ -189,7 +199,8 @@ const reducer = (state, action) => {
 };
 
 function App() {
-  const waitTransitionMilliseconds = 1500;
+  const congratulationsMilliseconds = 1500;
+  const wordFadeOutMilliseconds = 1000;
   // Define the initial state within the App or import from another file
   const initialState = {
     characterChips: [], // Initialize with your character chips data
@@ -246,9 +257,27 @@ function App() {
 
   useEffect(() => {
     pronounceCurrentWord();
-    // Start fade-out effect or any other related logic for new word initialization here.
-    startFadeOut();
   }, [state.currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    // Set fadOut to false when the current word changes
+    dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });    
+    console.log('Current word is now:', state.currentWord);
+    console.log("fadeOut is now:", state.fadeOut);
+  }, [state.currentWord]);
+
+  useEffect(() => {
+    // If fadeOut is true, start the fade-out effect
+    if (state.fadeOut) {
+      // Start fade-out effect
+      // ...
+      // After the effect is finished, set fadeOut to false
+      setTimeout(() => {
+        console.log('Fade out effect finished');
+        // dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });
+      }, wordFadeOutMilliseconds); // Assuming waitTransitionMilliseconds is the duration of the effect
+    }
+  }, [state.fadeOut]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This function is called when a chip is dropped into an input-box.
   const pronounceInputBoxes = useCallback(() => {
@@ -303,7 +332,6 @@ function App() {
 
   const handleDrop = (event, targetInputBoxId) => {
     event.preventDefault();
-    console.log("e.target.id:", event.target.id);
     // Get the dragged chip ID either from touch or mouse dataTransfer
     const draggedChipId 
       = event.dataTransfer
@@ -383,7 +411,7 @@ function App() {
       // Progress to next animal
       setTimeout(() => {
         dispatch({ type: ActionTypes.PROGRESS_TO_NEXT_ANIMAL });
-      }, waitTransitionMilliseconds)
+      }, congratulationsMilliseconds)
     }
   }, [state.inputBoxChips, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -446,13 +474,6 @@ function App() {
     };
   }, []); // Empty dependency array ensures this runs on mount and unmount only
 
-  // Call this function to start the fade-out effect
-  const startFadeOut = useCallback(() => {
-    dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });
-
-  }, [dispatch]);
-
-
   useEffect(() => {
     // Create a ref for each character chip
     const newChipRefs = characterChips.reduce((acc, chip) => {
@@ -497,6 +518,7 @@ function App() {
 
   // Determine the class to apply based on the state.fadeOut property
   const wordDisplayClass = state.fadeOut ? 'fade-out' : '';
+  console.log("wordDisplayClass:", wordDisplayClass)
 
   return (
     <div className="app">
