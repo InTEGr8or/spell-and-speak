@@ -21,6 +21,7 @@ const ActionTypes = {
 
 // Define the reducer function
 const reducer = (state, action) => {
+  //MARK: Reducer
   switch (action.type) {
     case ActionTypes.SET_FADE_OUT:
       return {
@@ -28,7 +29,6 @@ const reducer = (state, action) => {
         fadeOut: action.payload,
       };
     
-      //MARK: Reducer
     case ActionTypes.MOVE_CHIP: {
       const { sourceChipId, sourceLocation, targetInputBoxId } = action.payload;
       if(!targetInputBoxId) return state;
