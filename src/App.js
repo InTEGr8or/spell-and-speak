@@ -264,7 +264,7 @@ function App() {
     dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });    
     console.log('Current word is now:', state.currentWord);
     console.log("fadeOut is now:", state.fadeOut);
-  }, [state.currentWord]);
+  }, [state.currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // If fadeOut is true, start the fade-out effect
