@@ -28,7 +28,7 @@ const reducer = (state, action) => {
         fadeOut: action.payload,
       };
     
-
+      //MARK: Reducer
     case ActionTypes.MOVE_CHIP: {
       const { sourceChipId, sourceLocation, targetInputBoxId } = action.payload;
       if(!targetInputBoxId) return state;
@@ -76,7 +76,7 @@ const reducer = (state, action) => {
         ...state,
         currentWord: newWord,
         animalIndex: incrementedIndex,
-        // fadeOut: false,
+        // fadeOut: true,
         // ... other state updates if needed ...
       };
     }
@@ -89,7 +89,7 @@ const reducer = (state, action) => {
         ...state,
         currentWord: newWord,
         animalIndex: decrementedIndex,
-        // fadeOut: false,
+        // fadeOut: true,
         // ... other state updates if needed ...
       };
     }
@@ -199,6 +199,7 @@ const reducer = (state, action) => {
 };
 
 function App() {
+  //MARK: App
   const congratulationsMilliseconds = 1500;
   const wordFadeOutMilliseconds = 1000;
   // Define the initial state within the App or import from another file
@@ -250,6 +251,16 @@ function App() {
 
   // This function is called only when the currentWord changes.
   const pronounceCurrentWord = useCallback(() => {
+    // I have kind of man-handled the word display fade out here because React was eating the update latency.
+    // I need the word to display breifly, often, and then fade out.
+    if(document.getElementById('word-display')){
+      if(document.getElementById('word-display').classList?.contains('fade-out')){
+        document.getElementById('word-display').classList.remove('fade-out');
+        setTimeout(() => {
+          document.getElementById('word-display').classList.add('fade-out');
+        }, wordFadeOutMilliseconds);
+      }
+    }
     if (currentWord) {
       handleSayWord(currentWord);
     }
@@ -268,15 +279,7 @@ function App() {
 
   useEffect(() => {
     // If fadeOut is true, start the fade-out effect
-    if (state.fadeOut) {
-      // Start fade-out effect
-      // ...
-      // After the effect is finished, set fadeOut to false
-      setTimeout(() => {
-        console.log('Fade out effect finished');
-        // dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });
-      }, wordFadeOutMilliseconds); // Assuming waitTransitionMilliseconds is the duration of the effect
-    }
+    dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });    
   }, [state.fadeOut]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This function is called when a chip is dropped into an input-box.
@@ -359,6 +362,7 @@ function App() {
   };
 
   const handleTouchEnd = useCallback((e) => {
+    // MARK: Handle touch end
     e.preventDefault(); // Prevent the default touch behavior
     const touchLocation = e.changedTouches[0];
     const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
@@ -537,7 +541,7 @@ function App() {
               <div className="nav-buttons" onClick={() => dispatch({ type: ActionTypes.DECREMENT_ANIMAL_INDEX })}>
                 &larr;
               </div>
-              <div className={`word-display ${wordDisplayClass}`}>{currentWord}</div>
+              <div id="word-display" className={`word-display ${wordDisplayClass}`}>{currentWord}</div>
               <div className="nav-buttons"onClick={() => dispatch({ type: ActionTypes.INCREMENT_ANIMAL_INDEX })}>
                 &rarr;
               </div>
