@@ -297,10 +297,6 @@ function App() {
     pronounceInputBoxes();
   }, [inputBoxChips]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleTouchStart = (e) => {
-    
-  }
-
   const handleDragStart = (e) => {
     const { id } = e.currentTarget;
     e.dataTransfer.setData('text/plain', id);
