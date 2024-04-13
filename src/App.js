@@ -32,6 +32,11 @@ const reducer = (state, action) => {
     case ActionTypes.MOVE_CHIP: {
       const { sourceChipId, sourceLocation, targetInputBoxId } = action.payload;
       if(!targetInputBoxId) return state;
+      if(targetInputBoxId === sourceLocation){
+        // This is a character tap.
+        // TODO: Add logic to handle character tap like make pronounce it
+        return state;
+      } 
 
       // Logic to remove the chip from its source
       const newCharacterChips = sourceLocation === 'character-tray'
@@ -323,6 +328,7 @@ function App() {
   };
 
   const handleTouchMove = useCallback((e) => {
+    // console.log('handleTouchMove', e);
     e.target.classList.add('dragging');
     e.parentId =e.target.parentNode.id;
     // Get the touch coordinates
@@ -363,6 +369,7 @@ function App() {
 
   const handleTouchEnd = useCallback((e) => {
     // MARK: Handle touch end
+    console.log("handleTouchEnd", e);
     e.preventDefault(); // Prevent the default touch behavior
     const touchLocation = e.changedTouches[0];
     const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
@@ -490,6 +497,7 @@ function App() {
 
   useEffect(() => {
     const handleTouchMove = (e) => {
+      // console.log('handleTouchMove in useEffect', e);
       e.preventDefault(); // This should prevent the default scrolling behavior
       // Duplicated from handleTouchMove
       e.target.classList.add('dragging');
@@ -557,7 +565,6 @@ function App() {
           const chip = chipId ? {
             id: chipId, 
             char: chipId.substring(15,16),
-            onDragStart: handleDragStart,
           } : null;
           return (
             <div 
@@ -565,10 +572,18 @@ function App() {
               id={inputBoxId} 
               className="input-box"
               onDrop={(event) => handleDrop(event, inputBoxId)} // Pass the inputBoxId to handleDrop
-              onTouchEnd={handleTouchEnd}
+              // onTouchEnd={handleTouchEnd}
               onDragOver={handleDragOver}
               >
-              {chip ? <CharacterChip {...chip} /> : null}
+              {chip ? <CharacterChip
+                ref={chipRefs[chip.id]} // Attach the correct ref for this chip
+                key={chip.id}
+                id={chip.id}
+                char={chip.char}
+                onDragStart={handleDragStart}
+                onTouchEnd={handleTouchEnd}
+                // onTouchMove and onTouchEnd are now handled by the added event listener
+              /> : null}
             </div>
           );
         })}
