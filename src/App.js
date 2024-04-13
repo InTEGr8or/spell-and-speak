@@ -297,6 +297,10 @@ function App() {
     pronounceInputBoxes();
   }, [inputBoxChips]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleTouchStart = (e) => {
+    
+  }
+
   const handleDragStart = (e) => {
     const { id } = e.currentTarget;
     e.dataTransfer.setData('text/plain', id);
@@ -549,7 +553,11 @@ function App() {
               <div className="nav-buttons" onClick={() => dispatch({ type: ActionTypes.DECREMENT_ANIMAL_INDEX })}>
                 &larr;
               </div>
-              <div id="word-display" className={`word-display ${wordDisplayClass}`}>{currentWord}</div>
+              <label 
+                id="word-display" 
+                onClick={() => pronounceCurrentWord(currentWord)} 
+                className={`word-display ${wordDisplayClass}`}
+                >{currentWord}</label>
               <div className="nav-buttons"onClick={() => dispatch({ type: ActionTypes.INCREMENT_ANIMAL_INDEX })}>
                 &rarr;
               </div>

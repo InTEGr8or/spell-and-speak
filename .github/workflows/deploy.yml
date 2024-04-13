@@ -1,4 +1,6 @@
 name: GitHub Actions Workflow
+permissions:
+  contents: write
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
@@ -13,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20] # We will deploy with only one version of node  
+        node-version: [20] # We will deploy with only one version of node
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -31,5 +33,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}  # GitHub automatically creates a GITHUB_TOKEN secret to use in your workflow
-          publish_dir: ./build      
-          publish_branch: gh-pages    
+          publish_dir: ./build
+          publish_branch: gh-pages
+          cname: spell-and-speak.com
