@@ -217,6 +217,41 @@ const reducer = (state, action) => {
   }
 };
 
+const letterSounds = {
+  'A': 'ah or ay',
+  'B': 'beh',
+  'C': 'keh or seh',
+  'D': 'deh',
+  'E': 'eh or ee',
+  'F': 'feh',
+  // Add other letters and their phonetic sounds here
+};
+
+const getVoice = () => {
+  // Select the best voice based on the current word
+  // This is a placeholder; you'll need to replace it with your actual logic
+  const voices = window.speechSynthesis.getVoices();
+  let naturalEnglishVoices = voices.filter(v => v.name.match('Natural.*English.*United States'));
+  const emma = naturalEnglishVoices.find(v => v.name.match('Emma')) || null;
+  let voice = emma 
+    ||(naturalEnglishVoices.length ? naturalEnglishVoices[0] : window.speechSynthesis.getVoices()[0]) 
+    || null ;
+  console.log('Useing voice', voice);
+  return voice;
+}
+
+function pronounceLetterSound(letter) {
+  const sound = letterSounds[letter.toUpperCase()];
+  if (sound) {
+    const utterance = new SpeechSynthesisUtterance(sound);
+    utterance.voice = getVoice(); // Make sure you've defined selectVoice() to choose the best voice
+    utterance.rate = 0.6; // You can adjust the rate and other properties as needed
+    window.speechSynthesis.speak(utterance);
+  } else {
+    console.error('Sound not found for letter:', letter);
+  }
+}
+
 function App() {
   //MARK: App
   const congratulationsMilliseconds = 1500;
@@ -264,10 +299,11 @@ function App() {
 
   // MARK: sayWord and useEffets
   // Say the characters in the input boxes
-  const sayWord = useCallback((word) => {
+  const sayWordWithBrowser = useCallback((word) => {
     // Use the SpeechSynthesis API to pronounce the word
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = 0.6;
+    utterance.voice = getVoice();
     window.speechSynthesis.speak(utterance);
   }, [state.inputBoxChips]); // Include state.inputBoxChips in the dependency array
 
@@ -296,7 +332,7 @@ function App() {
   const sayWithBrowser = (word) => {
     if ('speechSynthesis' in window) {
       // Browser supports speech synthesis
-      sayWord(word);
+      sayWordWithBrowser(word);
     } else {
       // Handle the error, possibly by informing the user
       console.error('Speech synthesis not supported in this browser.');
@@ -312,7 +348,7 @@ function App() {
     } else {
       sayWithBrowser(word);
     }
-  }, [sayWord]);
+  }, [sayWordWithBrowser]);
 
   // This function is called only when the currentWord changes.
   const pronounceCurrentWord = useCallback(() => {
