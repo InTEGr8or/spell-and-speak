@@ -3,6 +3,7 @@ import './App.css';
 import animals from './resources/animals.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
 import './components/CharacterChip/CharacterChip.css';
+// import { CognitoIdentityCredentials, config as AWSConfig } from 'aws-sdk';
 
 // Define action types
 const ActionTypes = {
@@ -472,9 +473,10 @@ function App() {
   useEffect(() => {
     // Select an animal from the animal list
     const newWord = animals[state.animalIndex].name;
-    const newInputBoxChips = JSON.parse(localStorage.getItem('inputBoxChips')) || {};
+    let newInputBoxChips = JSON.parse(localStorage.getItem('inputBoxChips')) || {};
 
     if(state.resetWord){
+      newInputBoxChips = {};
       for (let i = 0; i < newWord.length; i++) {
         newInputBoxChips[`input-box-${i}`] = null;
       }
