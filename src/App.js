@@ -3,7 +3,9 @@ import './App.css';
 import animals from './resources/animals.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
 import './components/CharacterChip/CharacterChip.css';
-// import { CognitoIdentityCredentials, config as AWSConfig } from 'aws-sdk';
+import AWS from 'aws-sdk';
+import { CognitoIdentityCredentials, config as AWSConfig } from 'aws-sdk';
+import Polly from 'aws-sdk/clients/polly';
 
 // Define action types
 const ActionTypes = {
@@ -19,6 +21,11 @@ const ActionTypes = {
   DECREMENT_ANIMAL_INDEX: 'DECREMENT_ANIMAL_INDEX',
   CONGRATULATE: 'CONGRATULATE',
 };
+
+AWS.config.region = 'us-east-1';
+AWS.config.credentials = new CognitoIdentityCredentials({
+  IdentityPoolId: 'us-east-1:5ee4b58d-942a-4568-a4d5-4dcc551259c3',
+})
 
 // Define the reducer function
 const reducer = (state, action) => {
@@ -214,6 +221,7 @@ function App() {
   //MARK: App
   const congratulationsMilliseconds = 1500;
   const wordFadeOutMilliseconds = 1000;
+  const usePolly = false;
   // Define the initial state within the App or import from another file
 
   let storedInputBoxChips = JSON.parse(localStorage.getItem('inputBoxChips')) || {};
@@ -226,6 +234,7 @@ function App() {
     animalIndex: parseInt(localStorage.getItem('animalIndex'), 10) || 0,
   };
   
+  console.log("Animals: ", animals.length);
 
   // Use useReducer hook to manage state
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -241,35 +250,67 @@ function App() {
     prevWordRef.current = state.currentWord;
   });
 
+  const getInputBoxWord = () => {
+    let word = Object.keys(state.inputBoxChips)
+      .sort() // Sort the keys to ensure the correct order
+      .map(boxId => {
+        const chipId = (state.inputBoxChips[boxId] ?? ' ').replace('character-chip-', '');
+        return chipId[0]; // Assuming chipId is like 'character-chip-A'
+      })
+      .join('')
+      .replace(/\s{2,}/g, ' ');
+    return word;
+  }
+
   // MARK: sayWord and useEffets
   // Say the characters in the input boxes
   const sayWord = useCallback((word) => {
-    if (!word) {
-      // Fallback to constructing the word from the inputBoxChips state if no word is provided
-      word = Object.keys(state.inputBoxChips)
-        .sort() // Sort the keys to ensure the correct order
-        .map(boxId => {
-          const chipId = (state.inputBoxChips[boxId] ?? ' ').replace('character-chip-', '');
-          return chipId[0]; // Assuming chipId is like 'character-chip-A'
-        })
-        .join('')
-        .replace(/\s{2,}/g, ' ');
-    }
-
     // Use the SpeechSynthesis API to pronounce the word
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = 0.6;
     window.speechSynthesis.speak(utterance);
   }, [state.inputBoxChips]); // Include state.inputBoxChips in the dependency array
 
-  // Update the handleSayWord function to accept a word parameter
-  const handleSayWord = useCallback((word) => {
+  const sayWithPolly = (word) => {
+    const polly = new Polly({ apiVersion: '2016-06-10' });
+
+    const params = {
+      OutputFormat: 'mp3', // You can also choose other formats like 'ogg_vorbis'
+      Text: word,
+      VoiceId: 'Joanna', // Choose a voice ID from those available in Polly
+      TextType: 'text' // You can also use ssml if your text contains SSML tags
+    };
+
+    polly.synthesizeSpeech(params, (err, response) => {
+      if (err) {
+        console.error(err.message);
+      } else if (response) {
+        // Play the audio stream returned by Polly
+        const audioBlob = new Blob([response.AudioStream], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+      }
+    });
+  }
+  const sayWithBrowser = (word) => {
     if ('speechSynthesis' in window) {
       // Browser supports speech synthesis
       sayWord(word);
     } else {
       // Handle the error, possibly by informing the user
       console.error('Speech synthesis not supported in this browser.');
+    }
+  }
+
+  // Update the handleSayWord function to accept a word parameter
+  const handleSayWord = useCallback((word) => {
+    word = word ?? getInputBoxWord();
+
+    if(usePolly){
+      sayWithPolly(word);
+    } else {
+      sayWithBrowser(word);
     }
   }, [sayWord]);
 
@@ -583,7 +624,7 @@ function App() {
     <div className="app">
       <div>
         <header className="header" >
-          SPELL-AND-SPEAK
+          spell-and-speak.com
         </header>
         {/* Display the current word and its image (if applicable) */}
         {currentWord && (
