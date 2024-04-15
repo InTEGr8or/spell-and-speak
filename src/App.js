@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useReducer } from 'react';
+import React, { useCallback, useState, useRef, useEffect, useReducer } from 'react';
 import './App.css';
 import animals from './resources/animals.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
@@ -28,7 +28,7 @@ const reducer = (state, action) => {
         ...state,
         fadeOut: action.payload,
       };
-    
+
     case ActionTypes.MOVE_CHIP: {
       const { sourceChipId, sourceLocation, targetInputBoxId } = action.payload;
       if(!targetInputBoxId) return state;
@@ -36,7 +36,7 @@ const reducer = (state, action) => {
         // This is a character tap.
         // TODO: Add logic to handle character tap like make pronounce it
         return state;
-      } 
+      }
 
       // Logic to remove the chip from its source
       const newCharacterChips = sourceLocation === 'character-tray'
@@ -76,10 +76,12 @@ const reducer = (state, action) => {
       const incrementedIndex = (state.animalIndex + 1) % animals.length;
       localStorage.setItem('animalIndex', incrementedIndex);
       const newWord = animals[incrementedIndex].name;
+      localStorage.setItem('currentWord', newWord);
       // ... logic to update state based on incrementedIndex ...
       return {
         ...state,
         currentWord: newWord,
+        resetWord: true,
         animalIndex: incrementedIndex,
         // fadeOut: true,
         // ... other state updates if needed ...
@@ -89,10 +91,12 @@ const reducer = (state, action) => {
       const decrementedIndex = (state.animalIndex - 1 + animals.length) % animals.length;
       localStorage.setItem('animalIndex', decrementedIndex);
       const newWord = animals[decrementedIndex].name;
+      localStorage.setItem('currentWord', newWord);
       // ... logic to update state based on decrementedIndex ...
       return {
         ...state,
         currentWord: newWord,
+        resetWord: true,
         animalIndex: decrementedIndex,
         // fadeOut: true,
         // ... other state updates if needed ...
@@ -104,6 +108,7 @@ const reducer = (state, action) => {
       localStorage.setItem('animalIndex', nextAnimalIndex); // Save the new index to localStorage
       let newWordObject = animals[nextAnimalIndex];
       let newWord = newWordObject.name;
+      localStorage.setItem('currentWord', newWord);
       let newInputBoxChips = {};
 
       for (let i = 0; i < newWord.length; i++) {
@@ -114,6 +119,7 @@ const reducer = (state, action) => {
         ...state,
         animalIndex: nextAnimalIndex,
         currentWord: newWord,
+        resetWord: true,
         inputBoxChips: newInputBoxChips,
         // fadeOut: true,
         // Reset any other relevant state properties as needed
@@ -153,7 +159,6 @@ const reducer = (state, action) => {
         characterChips: action.payload,
       };
     case ActionTypes.SET_INPUT_BOX_CHIPS:
-      debugger;
       return {
         ...state,
         inputBoxChips: action.payload,
@@ -183,6 +188,7 @@ const reducer = (state, action) => {
     }
     case ActionTypes.INIT_NEW_WORD: {
       const { newWord, newInputBoxChips, shuffledCharacters } = action.payload;
+      console.log('INIT_NEW_WORD newInputBoxChips', newInputBoxChips);
       const inputBoxElements = document.querySelectorAll('.input-box');
       inputBoxElements.forEach(inputBox => {
         inputBox.style.border = '1px dashed grey';
@@ -197,7 +203,7 @@ const reducer = (state, action) => {
         fadeOut: false,
       };
     }
-    
+
     default:
       return state;
   }
@@ -208,21 +214,33 @@ function App() {
   const congratulationsMilliseconds = 1500;
   const wordFadeOutMilliseconds = 1000;
   // Define the initial state within the App or import from another file
+
+  let storedInputBoxChips = JSON.parse(localStorage.getItem('inputBoxChips')) || {};
   const initialState = {
     characterChips: [], // Initialize with your character chips data
-    inputBoxChips: {}, // Initialize with your input boxes data
+    inputBoxChips: storedInputBoxChips, // Initialize with your input boxes data
     hasDropped: false,
     fadeOut: false,
+    resetWord: false,
     animalIndex: parseInt(localStorage.getItem('animalIndex'), 10) || 0,
   };
   
+
   // Use useReducer hook to manage state
   const [state, dispatch] = useReducer(reducer, initialState);
-  const [chipRefs, setChipRefs] = useState({});
-
   // Replace useState hooks with values from the state object
   const { currentWord, characterChips, inputBoxChips, hasDropped } = state;
 
+  const [chipRefs, setChipRefs] = useState({});
+
+  // Store previous value of currentWord to determine if it has changed
+  const prevWordRef = {current: useRef(state.currentWord)};
+
+  useEffect(() => {
+    prevWordRef.current = state.currentWord;
+  });
+
+  // MARK: sayWord and useEffets
   // Say the characters in the input boxes
   const sayWord = useCallback((word) => {
     if (!word) {
@@ -277,14 +295,17 @@ function App() {
 
   useEffect(() => {
     // Set fadOut to false when the current word changes
-    dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });    
+    dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });
     console.log('Current word is now:', state.currentWord);
-    console.log("fadeOut is now:", state.fadeOut);
+    console.log('useEfect triggered for currentWord inputBoxChips:', state.inputBoxChips);
+    if (prevWordRef.current !== undefined && prevWordRef.current !== state.currentWord) {
+      dispatch({ type: ActionTypes.SET_INPUT_BOX_CHIPS, payload: {} });
+    }
   }, [state.currentWord]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // If fadeOut is true, start the fade-out effect
-    dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });    
+    dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });
   }, [state.fadeOut]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This function is called when a chip is dropped into an input-box.
@@ -294,9 +315,30 @@ function App() {
   }, [handleSayWord]);
 
   useEffect(() => {
+    console.log('useEffect triggered for inputBoxChips:', inputBoxChips);
     pronounceInputBoxes();
   }, [inputBoxChips]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect((e) => {
+    // Save input-boxes state to local storage when it changes
+    console.log('storing inputBoxChips:', inputBoxChips);
+    console.log('characterChips:', characterChips);
+    console.log('currentWord:', currentWord);
+    console.log('prevWordRef.current:', prevWordRef.current);
+    localStorage.setItem('inputBoxChips', JSON.stringify(inputBoxChips));
+  }, [inputBoxChips]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Check for stored input-boxes state on component mount and restore it
+  useEffect(() => {
+    const storedInputBoxChips = localStorage.getItem('inputBoxChips') || '{}';
+    console.log('storedInputBoxChips:', storedInputBoxChips);
+    if (storedInputBoxChips) {
+      const parsedInputBoxChips = JSON.parse(storedInputBoxChips);
+      dispatch({ type: ActionTypes.SET_INPUT_BOX_CHIPS, payload: parsedInputBoxChips });
+    }
+  }, []);
+
+  // MARK: Functions
   const handleDragStart = (e) => {
     const { id } = e.currentTarget;
     e.dataTransfer.setData('text/plain', id);
@@ -310,8 +352,8 @@ function App() {
 
     // Use the off-screen element as the drag image
     e.dataTransfer.setDragImage(
-      dragImage, 
-      dragImage.offsetWidth / 2, 
+      dragImage,
+      dragImage.offsetWidth / 2,
       dragImage.offsetHeight / 2
     );
 
@@ -342,7 +384,7 @@ function App() {
   const handleDrop = (event, targetInputBoxId) => {
     event.preventDefault();
     // Get the dragged chip ID either from touch or mouse dataTransfer
-    const draggedChipId 
+    const draggedChipId
       = event.dataTransfer
       ? event.dataTransfer.getData("text/plain")
       : event.target.id; // Assuming the touch event sets the id on the target
@@ -350,7 +392,7 @@ function App() {
     // Don't drag an input box.
     if(draggedChipId.includes("input-box-")) return;
 
-    let draggedFromLocation 
+    let draggedFromLocation
       = event.dataTransfer
       ? event.dataTransfer.getData("parentId")
       : event.parentId; // 'characterChips' or 'inputBoxChips'
@@ -397,7 +439,7 @@ function App() {
     e.target.style.left = '';
     e.target.style.top = '';
     // Determine if the chip was dragged from an input box or the character tray for touch or click.
-    const parentId 
+    const parentId
       = e.target.parentNode
       ? e.target.parentNode.id
       : document.getElementById(e.target.id).parentNode.id;
@@ -408,8 +450,9 @@ function App() {
       parentId: parentId,
       target: { id: draggedChipId }, // Set the id of the dragged chip
     }, targetInputBoxId);
-  }, [inputBoxChips]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // MARK: UseEffects
   useEffect(() => {
     // Check if all input-boxes are filled correctly
     const allBoxesString = Object.values(state.inputBoxChips)
@@ -429,10 +472,12 @@ function App() {
   useEffect(() => {
     // Select an animal from the animal list
     const newWord = animals[state.animalIndex].name;
-    const newInputBoxChips = {};
+    const newInputBoxChips = JSON.parse(localStorage.getItem('inputBoxChips')) || {};
 
-    for (let i = 0; i < newWord.length; i++) {
-      newInputBoxChips[`input-box-${i}`] = null;
+    if(state.resetWord){
+      for (let i = 0; i < newWord.length; i++) {
+        newInputBoxChips[`input-box-${i}`] = null;
+      }
     }
 
     // Split the new word into characters and create chips for them
@@ -466,8 +511,8 @@ function App() {
         shuffledCharacters,
       },
     });
-  }, [state.animalIndex, dispatch]);
-  
+  }, [state.animalIndex, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Use an effect to call your callback after the state has been updated
   useEffect(() => {
     if (hasDropped) {
@@ -475,7 +520,7 @@ function App() {
       dispatch({ type: ActionTypes.SET_HAS_DROPPED, payload: false })
     }
   }, [hasDropped, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
-  
+
   useEffect(() => {
     // Perform any necessary cleanup
     return () => {
@@ -530,8 +575,8 @@ function App() {
 
   // Determine the class to apply based on the state.fadeOut property
   const wordDisplayClass = state.fadeOut ? 'fade-out' : '';
-  console.log("wordDisplayClass:", wordDisplayClass)
 
+  // MARK: return JSX
   return (
     <div className="app">
       <div>
@@ -541,17 +586,17 @@ function App() {
         {/* Display the current word and its image (if applicable) */}
         {currentWord && (
           <>
-            <img 
-              onClick={() => pronounceCurrentWord(currentWord)} 
-              className="word-image" 
+            <img
+              onClick={() => pronounceCurrentWord(currentWord)}
+              className="word-image"
               src={`/assets/images/${currentWord}.webp`}  alt={currentWord} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="nav-buttons" onClick={() => dispatch({ type: ActionTypes.DECREMENT_ANIMAL_INDEX })}>
                 &larr;
               </div>
-              <label 
-                id="word-display" 
-                onClick={() => pronounceCurrentWord(currentWord)} 
+              <label
+                id="word-display"
+                onClick={() => pronounceCurrentWord(currentWord)}
                 className={`word-display ${wordDisplayClass}`}
                 >{currentWord}</label>
               <div className="nav-buttons"onClick={() => dispatch({ type: ActionTypes.INCREMENT_ANIMAL_INDEX })}>
@@ -567,13 +612,13 @@ function App() {
         {Object.keys(inputBoxChips).map((inputBoxId) => {
           const chipId = inputBoxChips[inputBoxId];
           const chip = chipId ? {
-            id: chipId, 
+            id: chipId,
             char: chipId.substring(15,16),
           } : null;
           return (
-            <div 
-              key={inputBoxId} 
-              id={inputBoxId} 
+            <div
+              key={inputBoxId}
+              id={inputBoxId}
               className="input-box"
               onDrop={(event) => handleDrop(event, inputBoxId)} // Pass the inputBoxId to handleDrop
               // onTouchEnd={handleTouchEnd}
@@ -593,7 +638,7 @@ function App() {
         })}
       </div>
       <div
-        id="character-tray" 
+        id="character-tray"
         className="character-tray" >
         {characterChips.map((chip) => (
           <CharacterChip
