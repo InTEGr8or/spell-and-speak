@@ -4,7 +4,7 @@ import animals from './resources/animals.json';
 import CharacterChip from './components/CharacterChip/CharacterChip';
 import './components/CharacterChip/CharacterChip.css';
 import AWS from 'aws-sdk';
-import { CognitoIdentityCredentials, config as AWSConfig } from 'aws-sdk';
+import { CognitoIdentityCredentials } from 'aws-sdk';
 import Polly from 'aws-sdk/clients/polly';
 
 // Define action types
@@ -196,7 +196,6 @@ const reducer = (state, action) => {
     }
     case ActionTypes.INIT_NEW_WORD: {
       const { newWord, newInputBoxChips, shuffledCharacters } = action.payload;
-      console.log('INIT_NEW_WORD newInputBoxChips', newInputBoxChips);
       const inputBoxElements = document.querySelectorAll('.input-box');
       inputBoxElements.forEach(inputBox => {
         inputBox.style.border = '1px dashed grey';
@@ -218,12 +217,12 @@ const reducer = (state, action) => {
 };
 
 const letterSounds = {
-  'A': 'ah or ay',
-  'B': 'beh',
-  'C': 'keh or seh',
-  'D': 'deh',
-  'E': 'eh or ee',
-  'F': 'feh',
+  'A': 'ahhhh or ayyyyy',
+  'B': 'behhhh',
+  'C': 'kehhhh or sehhhh',
+  'D': 'dehhhhh',
+  'E': 'ehhhhh or eeeeee',
+  'F': 'fffehhhhh',
   // Add other letters and their phonetic sounds here
 };
 
@@ -240,15 +239,13 @@ const getVoice = () => {
   return voice;
 }
 
-function pronounceLetterSound(letter) {
+function soundOfLetter(letter) {
   const sound = letterSounds[letter.toUpperCase()];
   if (sound) {
-    const utterance = new SpeechSynthesisUtterance(sound);
-    utterance.voice = getVoice(); // Make sure you've defined selectVoice() to choose the best voice
-    utterance.rate = 0.6; // You can adjust the rate and other properties as needed
-    window.speechSynthesis.speak(utterance);
+    return sound;
   } else {
     console.error('Sound not found for letter:', letter);
+    return letter;
   }
 }
 
@@ -342,13 +339,14 @@ function App() {
   // Update the handleSayWord function to accept a word parameter
   const handleSayWord = useCallback((word) => {
     word = word ?? getInputBoxWord();
-
+    // Use the soundOfLetter function to get the sound if there is only one letter.
+    word = word.length > 1 ? word : soundOfLetter(word);
     if(usePolly){
       sayWithPolly(word);
     } else {
       sayWithBrowser(word);
     }
-  }, [sayWordWithBrowser]);
+  }, [sayWordWithBrowser]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This function is called only when the currentWord changes.
   const pronounceCurrentWord = useCallback(() => {
@@ -374,8 +372,6 @@ function App() {
   useEffect(() => {
     // Set fadOut to false when the current word changes
     dispatch({ type: ActionTypes.SET_FADE_OUT, payload: true });
-    console.log('Current word is now:', state.currentWord);
-    console.log('useEfect triggered for currentWord inputBoxChips:', state.inputBoxChips);
     if (prevWordRef.current !== undefined && prevWordRef.current !== state.currentWord) {
       dispatch({ type: ActionTypes.SET_INPUT_BOX_CHIPS, payload: {} });
     }
@@ -393,23 +389,17 @@ function App() {
   }, [handleSayWord]);
 
   useEffect(() => {
-    console.log('useEffect triggered for inputBoxChips:', inputBoxChips);
     pronounceInputBoxes();
   }, [inputBoxChips]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect((e) => {
     // Save input-boxes state to local storage when it changes
-    console.log('storing inputBoxChips:', inputBoxChips);
-    console.log('characterChips:', characterChips);
-    console.log('currentWord:', currentWord);
-    console.log('prevWordRef.current:', prevWordRef.current);
     localStorage.setItem('inputBoxChips', JSON.stringify(inputBoxChips));
   }, [inputBoxChips]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check for stored input-boxes state on component mount and restore it
   useEffect(() => {
     const storedInputBoxChips = localStorage.getItem('inputBoxChips') || '{}';
-    console.log('storedInputBoxChips:', storedInputBoxChips);
     if (storedInputBoxChips) {
       const parsedInputBoxChips = JSON.parse(storedInputBoxChips);
       dispatch({ type: ActionTypes.SET_INPUT_BOX_CHIPS, payload: parsedInputBoxChips });
@@ -448,7 +438,6 @@ function App() {
   };
 
   const handleTouchMove = useCallback((e) => {
-    // console.log('handleTouchMove', e);
     e.target.classList.add('dragging');
     e.parentId =e.target.parentNode.id;
     // Get the touch coordinates
@@ -489,7 +478,6 @@ function App() {
 
   const handleTouchEnd = useCallback((e) => {
     // MARK: Handle touch end
-    console.log("handleTouchEnd", e);
     e.preventDefault(); // Prevent the default touch behavior
     const touchLocation = e.changedTouches[0];
     const touchPoint = { x: touchLocation.clientX, y: touchLocation.clientY };
@@ -621,7 +609,6 @@ function App() {
 
   useEffect(() => {
     const handleTouchMove = (e) => {
-      // console.log('handleTouchMove in useEffect', e);
       e.preventDefault(); // This should prevent the default scrolling behavior
       // Duplicated from handleTouchMove
       e.target.classList.add('dragging');

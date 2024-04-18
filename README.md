@@ -57,3 +57,12 @@ Initially, touch events were handled both through React's synthetic event system
 
 ### Moving Forward
 For future work on the project, it's important to maintain the distinction between touch and mouse event handling, ensure that event listeners are correctly cleaned up to prevent memory leaks, and continue to test touch interactions on various devices for robustness and responsiveness.
+
+## Roadmap
+
+* [ ] Create a script to use DALL-E with a professional prompt to create more animal images, possibly using the new OpenAI Batch feature.
+* [ ] "Sound out" single characters by saying the character sound instead of the name.
+  * [ ] Create a word class or type instead of just a string variable.
+    * [ ] Might require converting to TypeScript, so this might be a separate content.
+
+
