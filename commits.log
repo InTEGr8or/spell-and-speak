@@ -1,0 +1,77 @@
+9a2c99d WIP
+89ce064 Use better voice, if available
+1847f26 Add Polly option but requires user interaction
+c9fcb90 Reinit newInputBoxChips
+d6199d4 Store partial input-boxes
+74ec1d5 Remove handleTouchStart until it's used
+15d8af2 Handle current-word tap
+c56f5d7 Tighten margins a big
+2260513 Move character tray up 40px
+d981b94 Move CNAME to root
+028d98a Revert deploy.yml
+a5e1c7f Fix input-box tap char duplication
+fd4e5de Update versionTicks
+0793ffb Fix brief word display and pronouce on tap
+5a4704c Try updated deploy.yml again
+a0468e5 Update readme
+8159ec6 revert deploy.yml
+7b9e340 Update version
+4f8770c Add eslint ignore line
+746f19a Add publish_branch
+9cd2200 Use improved workflow
+058a052 Improve congratulation timeout
+f1ae7a1 Update CNAME
+4d18651 Add CNAME
+ff63d05 Fix congratulations timeout
+f0b67bd break case with no return
+b49096b Pause before incrementing animal
+23ad289 Don't drag an empty input box
+fef9a80 Update docs
+d87450e Move tap sayWord to just image
+bdb2bd0 Handle undefined targetInputBoxId
+85a8cc3 eslint ignore dependencies
+40f83a9 Fixed sayWord event handler
+f496836 Remove vetigial useRef
+4161c03 handleTouchMove is working
+4ee1852 TouchMoves are working again but dragging the page
+708574c WIP preventDefault()
+00d9606 Move and replace chip in input-box
+e759a27 Left and right arrows updates localStorage
+4b1131b Left and right arrows
+bfe6cc3 Ignore eslint dep check
+a0c0ead Incremental animal progress
+bd21a09 Update <meta version>
+437be2a Update <meta version>
+8b66c0c Add images
+cf4de9d Add eslint ignore
+3f4d7dd Stop the double-speak
+4a6e6e1 Move version ticks to index.html
+2923946 Try to disable CDN caching on GH Pages
+ed3412d Add hidden search string to validate deployment
+b0f4cad Say word on load
+95a3758 Improve UX
+7927865 Update github action
+900d61d Testing deployment
+067ab39 Testing deployment
+3f6ec8b Desktop drag-and-drop working
+7be5ee6 Using reducer() instead of useEffect
+7d1c06e update deployment
+7563efa update deployment
+5f6e399 Fix dependency warning
+02fbd3d Combine drop events
+e08d7a4 Deploy to master/build
+a80523e Comment soon-to-be-used var
+cb45e47 Refactor CharacterChip out to file
+7441280 cleanup whitespace
+a0ddec3 Fix useCallback() warning
+584cbcd Update workflow
+230dfbe Add GitHub Actions for deployment to gh-pages
+9220796 Add pages config
+f382c78 Speaking the spelling
+d115de3 Drop character-chip into input-box
+2bf439f 
+744b060 
+caef398 Add character-chip dragging
+f27a629 Add React app
+b0969e5 
+b1af7c7 init

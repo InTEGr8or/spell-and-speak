@@ -135,6 +135,7 @@ const reducer = (state, action) => {
     }
     case ActionTypes.DROP_CHIP: {
       const { draggedChipId, targetInputBoxId} = action.payload;
+      console.log('dropped', draggedChipId, targetInputBoxId);
       const existingChipId = state.inputBoxChips[targetInputBoxId];
 
       // Remove the dragged chip object from characterChips
@@ -526,6 +527,7 @@ function App() {
 
     if (allBoxesString === state.currentWord) {
       // TODO: Celebrate success better
+
       dispatch({ type: ActionTypes.CONGRATULATE });
 
       // Progress to next animal
