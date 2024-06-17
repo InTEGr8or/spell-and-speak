@@ -40,8 +40,8 @@ const reducer = (state, action) => {
 
     case ActionTypes.MOVE_CHIP: {
       const { sourceChipId, sourceLocation, targetInputBoxId } = action.payload;
-      if(!targetInputBoxId) return state;
-      if(targetInputBoxId === sourceLocation){
+      if (!targetInputBoxId) return state;
+      if (targetInputBoxId === sourceLocation) {
         // This is a character tap.
         // TODO: Add logic to handle character tap like make pronounce it
         return state;
@@ -67,7 +67,7 @@ const reducer = (state, action) => {
           id: replacedChipId,
           // You may need to include other properties to construct the chip object
           // For example, if you need the character (char) associated with the chip
-          char: replacedChipId.substring(15,16), // Modify depending on your ID structure
+          char: replacedChipId.substring(15, 16), // Modify depending on your ID structure
         });
       }
 
@@ -135,7 +135,7 @@ const reducer = (state, action) => {
       };
     }
     case ActionTypes.DROP_CHIP: {
-      const { draggedChipId, targetInputBoxId} = action.payload;
+      const { draggedChipId, targetInputBoxId } = action.payload;
       console.log('dropped', draggedChipId, targetInputBoxId);
       const existingChipId = state.inputBoxChips[targetInputBoxId];
 
@@ -143,9 +143,9 @@ const reducer = (state, action) => {
       const newCharacterChips = state.characterChips.filter(chip => chip.id !== draggedChipId);
 
       // If there is an existing chip in the target input box, add it back to characterChips
-      if(existingChipId) {
+      if (existingChipId) {
         const existingChip = state.characterChips.find(chip => chip.id === existingChipId);
-        if(existingChip) {
+        if (existingChip) {
           newCharacterChips.push(existingChip);
         }
       }
@@ -234,9 +234,9 @@ const getVoice = () => {
   const voices = window.speechSynthesis.getVoices();
   let naturalEnglishVoices = voices.filter(v => v.name.match('Natural.*English.*United States'));
   const emma = naturalEnglishVoices.find(v => v.name.match('Emma')) || null;
-  let voice = emma 
-    ||(naturalEnglishVoices.length ? naturalEnglishVoices[0] : window.speechSynthesis.getVoices()[0]) 
-    || null ;
+  let voice = emma
+    || (naturalEnglishVoices.length ? naturalEnglishVoices[0] : window.speechSynthesis.getVoices()[0])
+    || null;
   console.log('Useing voice', voice);
   return voice;
 }
@@ -267,7 +267,7 @@ function App() {
     resetWord: false,
     animalIndex: parseInt(localStorage.getItem('animalIndex'), 10) || 0,
   };
-  
+
   console.log("Animals: ", animals.length);
 
   // Use useReducer hook to manage state
@@ -278,7 +278,7 @@ function App() {
   const [chipRefs, setChipRefs] = useState({});
 
   // Store previous value of currentWord to determine if it has changed
-  const prevWordRef = {current: useRef(state.currentWord)};
+  const prevWordRef = { current: useRef(state.currentWord) };
 
   useEffect(() => {
     prevWordRef.current = state.currentWord;
@@ -343,7 +343,7 @@ function App() {
     word = word ?? getInputBoxWord();
     // Use the soundOfLetter function to get the sound if there is only one letter.
     word = word.length > 1 ? word : soundOfLetter(word);
-    if(usePolly){
+    if (usePolly) {
       sayWithPolly(word);
     } else {
       sayWithBrowser(word);
@@ -354,8 +354,8 @@ function App() {
   const pronounceCurrentWord = useCallback(() => {
     // I have kind of man-handled the word display fade out here because React was eating the update latency.
     // I need the word to display breifly, often, and then fade out.
-    if(document.getElementById('word-display')){
-      if(document.getElementById('word-display').classList?.contains('fade-out')){
+    if (document.getElementById('word-display')) {
+      if (document.getElementById('word-display').classList?.contains('fade-out')) {
         document.getElementById('word-display').classList.remove('fade-out');
         setTimeout(() => {
           document.getElementById('word-display').classList.add('fade-out');
@@ -429,7 +429,7 @@ function App() {
 
     // Remove the drag image from the DOM after the drag operation starts
     setTimeout(() => {
-      if(document.body.contains(dragImage)){
+      if (document.body.contains(dragImage)) {
         document.body.removeChild(dragImage);
       }
     }, 0); // Use setTimeout to defer the removal until after the drag image is used
@@ -441,7 +441,7 @@ function App() {
 
   const handleTouchMove = useCallback((e) => {
     e.target.classList.add('dragging');
-    e.parentId =e.target.parentNode.id;
+    e.parentId = e.target.parentNode.id;
     // Get the touch coordinates
     const touchLocation = e.targetTouches[0];
     // Set the style to move the element with the touch
@@ -455,16 +455,16 @@ function App() {
     // Get the dragged chip ID either from touch or mouse dataTransfer
     const draggedChipId
       = event.dataTransfer
-      ? event.dataTransfer.getData("text/plain")
-      : event.target.id; // Assuming the touch event sets the id on the target
+        ? event.dataTransfer.getData("text/plain")
+        : event.target.id; // Assuming the touch event sets the id on the target
 
     // Don't drag an input box.
-    if(draggedChipId.includes("input-box-")) return;
+    if (draggedChipId.includes("input-box-")) return;
 
     let draggedFromLocation
       = event.dataTransfer
-      ? event.dataTransfer.getData("parentId")
-      : event.parentId; // 'characterChips' or 'inputBoxChips'
+        ? event.dataTransfer.getData("parentId")
+        : event.parentId; // 'characterChips' or 'inputBoxChips'
 
     const droppedIntoInputBoxId = targetInputBoxId;
     // Update the state to reflect the chip moving from the source to the destination
@@ -509,11 +509,11 @@ function App() {
     // Determine if the chip was dragged from an input box or the character tray for touch or click.
     const parentId
       = e.target.parentNode
-      ? e.target.parentNode.id
-      : document.getElementById(e.target.id).parentNode.id;
+        ? e.target.parentNode.id
+        : document.getElementById(e.target.id).parentNode.id;
     // Call handleDrop with the necessary information
     handleDrop({
-      preventDefault: () => {}, // Mock preventDefault function
+      preventDefault: () => { }, // Mock preventDefault function
       dataTransfer: false, // Mock dataTransfer
       parentId: parentId,
       target: { id: draggedChipId }, // Set the id of the dragged chip
@@ -524,11 +524,21 @@ function App() {
   useEffect(() => {
     // Check if all input-boxes are filled correctly
     const allBoxesString = Object.values(state.inputBoxChips)
-      .map(c => (c ?? ' ').substring(15,16)).join('');
+      .map(c => (c ?? ' ').substring(15, 16)).join('');
 
     if (allBoxesString === state.currentWord) {
       // TODO: Celebrate success better
-      confetti();
+      confetti({
+        particleCount: 150,     // Increase number of particles
+        spread: 70,             // Wider spread
+        startVelocity: 30,      // Higher initial velocity
+        gravity: 0.5,           // Adjust gravity, less means longer float
+        ticks: 200,             // Number of times the confetti will move (duration)
+        origin: {               // Where on the page the confetti will start
+          x: 0.5,               // Horizontal center
+          y: 0.5                // Vertical center
+        }
+      });
 
       dispatch({ type: ActionTypes.CONGRATULATE });
 
@@ -544,7 +554,7 @@ function App() {
     const newWord = animals[state.animalIndex].name;
     let newInputBoxChips = JSON.parse(localStorage.getItem('inputBoxChips')) || {};
 
-    if(state.resetWord){
+    if (state.resetWord) {
       newInputBoxChips = {};
       for (let i = 0; i < newWord.length; i++) {
         newInputBoxChips[`input-box-${i}`] = null;
@@ -616,7 +626,7 @@ function App() {
       e.preventDefault(); // This should prevent the default scrolling behavior
       // Duplicated from handleTouchMove
       e.target.classList.add('dragging');
-      e.parentId =e.target.parentNode.id;
+      e.parentId = e.target.parentNode.id;
       // Get the touch coordinates
       const touchLocation = e.targetTouches[0];
       // Set the style to move the element with the touch
@@ -659,7 +669,7 @@ function App() {
             <img
               onClick={() => pronounceCurrentWord(currentWord)}
               className="word-image"
-              src={`/assets/images/${currentWord}.webp`}  alt={currentWord} />
+              src={`/assets/images/${currentWord}.webp`} alt={currentWord} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="nav-buttons" onClick={() => dispatch({ type: ActionTypes.DECREMENT_ANIMAL_INDEX })}>
                 &larr;
@@ -668,8 +678,8 @@ function App() {
                 id="word-display"
                 onClick={() => pronounceCurrentWord(currentWord)}
                 className={`word-display ${wordDisplayClass}`}
-                >{currentWord}</label>
-              <div className="nav-buttons"onClick={() => dispatch({ type: ActionTypes.INCREMENT_ANIMAL_INDEX })}>
+              >{currentWord}</label>
+              <div className="nav-buttons" onClick={() => dispatch({ type: ActionTypes.INCREMENT_ANIMAL_INDEX })}>
                 &rarr;
               </div>
             </div>
@@ -683,7 +693,7 @@ function App() {
           const chipId = inputBoxChips[inputBoxId];
           const chip = chipId ? {
             id: chipId,
-            char: chipId.substring(15,16),
+            char: chipId.substring(15, 16),
           } : null;
           return (
             <div
@@ -693,7 +703,7 @@ function App() {
               onDrop={(event) => handleDrop(event, inputBoxId)} // Pass the inputBoxId to handleDrop
               // onTouchEnd={handleTouchEnd}
               onDragOver={handleDragOver}
-              >
+            >
               {chip ? <CharacterChip
                 ref={chipRefs[chip.id]} // Attach the correct ref for this chip
                 key={chip.id}
@@ -701,7 +711,7 @@ function App() {
                 char={chip.char}
                 onDragStart={handleDragStart}
                 onTouchEnd={handleTouchEnd}
-                // onTouchMove and onTouchEnd are now handled by the added event listener
+              // onTouchMove and onTouchEnd are now handled by the added event listener
               /> : null}
             </div>
           );
@@ -718,7 +728,7 @@ function App() {
             char={chip.char}
             onDragStart={handleDragStart}
             onTouchEnd={handleTouchEnd}
-            // onTouchMove and onTouchEnd are now handled by the added event listener
+          // onTouchMove and onTouchEnd are now handled by the added event listener
           />
         ))}
       </div>
