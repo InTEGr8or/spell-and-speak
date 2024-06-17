@@ -6,6 +6,7 @@ import './components/CharacterChip/CharacterChip.css';
 import AWS from 'aws-sdk';
 import { CognitoIdentityCredentials } from 'aws-sdk';
 import Polly from 'aws-sdk/clients/polly';
+import confetti from 'canvas-confetti';
 
 // Define action types
 const ActionTypes = {
@@ -527,6 +528,7 @@ function App() {
 
     if (allBoxesString === state.currentWord) {
       // TODO: Celebrate success better
+      confetti();
 
       dispatch({ type: ActionTypes.CONGRATULATE });
 
