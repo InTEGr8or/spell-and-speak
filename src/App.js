@@ -304,7 +304,7 @@ function App() {
     utterance.rate = 0.6;
     utterance.voice = getVoice();
     window.speechSynthesis.speak(utterance);
-  }, [state.inputBoxChips]); // Include state.inputBoxChips in the dependency array
+  }, [state.inputBoxChips]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sayWithPolly = (word) => {
     const polly = new Polly({ apiVersion: '2016-06-10' });
@@ -328,6 +328,7 @@ function App() {
       }
     });
   }
+
   const sayWithBrowser = (word) => {
     if ('speechSynthesis' in window) {
       // Browser supports speech synthesis

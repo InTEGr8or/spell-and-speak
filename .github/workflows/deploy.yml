@@ -36,4 +36,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}  # GitHub automatically creates a GITHUB_TOKEN secret to use in your workflow
           publish_dir: ./build
           publish_branch: gh-pages
-          cname: spell-and-speak.com
+          cname: spellsay.com
