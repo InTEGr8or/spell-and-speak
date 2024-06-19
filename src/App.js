@@ -204,6 +204,7 @@ const reducer = (state, action) => {
         inputBox.style.opacity = 1;
         inputBox.style.transition = null;
       });
+
       return {
         ...state,
         currentWord: newWord,
@@ -258,16 +259,28 @@ function App() {
   // Define the initial state within the App or import from another file
 
   let storedInputBoxChips = JSON.parse(localStorage.getItem('inputBoxChips')) || {};
+  let animalIndex = parseInt(localStorage.getItem('animalIndex'), 10);
+  if(isNaN(animalIndex)) {
+    console.log("Animal index not found, defaulting to 0");
+    animalIndex = 0;
+    let animal = animals[animalIndex];
+    localStorage.setItem('animalIndex', animalIndex);
+    storedInputBoxChips = {};
+    for (let i = 0; i < animal.name.length; i++) {
+      storedInputBoxChips[`input-box-${i}`] = null;
+    }
+    console.log("Stored input box chips:", storedInputBoxChips);
+    localStorage.setItem('inputBoxChips', JSON.stringify(storedInputBoxChips));
+  }
+
   const initialState = {
     characterChips: [], // Initialize with your character chips data
     inputBoxChips: storedInputBoxChips, // Initialize with your input boxes data
     hasDropped: false,
     fadeOut: false,
     resetWord: false,
-    animalIndex: parseInt(localStorage.getItem('animalIndex'), 10) || 0,
+    animalIndex: animalIndex,
   };
-
-  console.log("Input box chips: ", storedInputBoxChips);
 
   // Use useReducer hook to manage state
   const [state, dispatch] = useReducer(reducer, initialState);
