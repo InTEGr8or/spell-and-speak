@@ -26,6 +26,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       # Yarn is used for installing dependencies and building the project
+      - name: Set NODE_OPTIONS
+        run: echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV # This line sets the environment variable
       - name: Install dependencies with yarn
         run: yarn install --frozen-lockfile
       - name: Build with yarn
