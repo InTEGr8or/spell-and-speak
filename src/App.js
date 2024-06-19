@@ -237,7 +237,6 @@ const getVoice = () => {
   let voice = emma
     || (naturalEnglishVoices.length ? naturalEnglishVoices[0] : window.speechSynthesis.getVoices()[0])
     || null;
-  console.log('Useing voice', voice);
   return voice;
 }
 
@@ -268,7 +267,7 @@ function App() {
     animalIndex: parseInt(localStorage.getItem('animalIndex'), 10) || 0,
   };
 
-  console.log("Animals: ", animals.length);
+  console.log("Input box chips: ", storedInputBoxChips);
 
   // Use useReducer hook to manage state
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -662,7 +661,7 @@ function App() {
     <div className="app">
       <div>
         <header className="header" >
-          spell-and-speak.com
+          spellsay.com
         </header>
         {/* Display the current word and its image (if applicable) */}
         {currentWord && (
