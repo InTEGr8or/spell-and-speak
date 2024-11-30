@@ -2,11 +2,15 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "msedge",
+      "type": "chrome",
       "request": "launch",
-      "name": "Launch Edge against localhost",
+      "name": "Launch Chrome against localhost",
       "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}"
+      "webRoot": "${workspaceFolder}",
+      "runtimeArgs": [
+        "--incognito",
+        "--new-window"
+      ],
     },
     {
       "name": "Attach to Edge",

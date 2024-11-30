@@ -64,5 +64,5 @@ For future work on the project, it's important to maintain the distinction betwe
 * [ ] "Sound out" single characters by saying the character sound instead of the name.
   * [ ] Create a word class or type instead of just a string variable.
     * [ ] Might require converting to TypeScript, so this might be a separate content.
-
+* [ ] Create sound effects (SFX) for word completion [Eleven Labs API](https://elevenlabs.io/docs/api-reference/sound-generation)
 
